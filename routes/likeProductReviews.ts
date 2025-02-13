@@ -14,14 +14,18 @@ const security = require('../lib/insecurity')
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.body.id
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'Invalid review ID' })
+    }
+    
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
         res.status(404).json({ error: 'Not found' })
       } else {
-        const likedBy = review.likedBy
+        const likedBy = Array.isArray(review.likedBy) ? review.likedBy : []
         if (!likedBy.includes(user.data.email)) {
-          db.reviewsCollection.update(
+          db.reviewsCollection.updateOne(
             { _id: id },
             { $inc: { likesCount: 1 } }
           ).then(
@@ -29,7 +33,10 @@ module.exports = function productReviews () {
               // Artificial wait for timing attack challenge
               setTimeout(function () {
                 db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
-                  const likedBy = review.likedBy
+                  if (!review) {
+                    return res.status(404).json({ error: 'Review not found' })
+                  }
+                  const likedBy = Array.isArray(review.likedBy) ? review.likedBy : []
                   likedBy.push(user.data.email)
                   let count = 0
                   for (let i = 0; i < likedBy.length; i++) {
@@ -38,9 +45,9 @@ module.exports = function productReviews () {
                     }
                   }
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
-                  db.reviewsCollection.update(
+                  db.reviewsCollection.updateOne(
                     { _id: id },
-                    { $set: { likedBy } }
+                    { $set: { likedBy: likedBy } }
                   ).then(
                     (result: any) => {
                       res.json(result)
