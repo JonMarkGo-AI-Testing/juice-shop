@@ -8,12 +8,18 @@ import { type Request, type Response, type NextFunction } from 'express'
 import { type Review } from '../data/types'
 import * as db from '../data/mongodb'
 import { challenges } from '../data/datacache'
+import { ObjectId } from 'mongodb'
 
 const security = require('../lib/insecurity')
 
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
-    const id = req.body.id
+    let id: ObjectId
+    try {
+      id = new ObjectId(req.body.id)
+    } catch (err) {
+      return res.status(400).json({ error: 'Invalid review ID format' })
+    }
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
@@ -23,12 +29,13 @@ module.exports = function productReviews () {
         if (!likedBy.includes(user.data.email)) {
           db.reviewsCollection.update(
             { _id: id },
-            { $inc: { likesCount: 1 } }
+            { $inc: { likesCount: 1 } },
+            { runValidators: true }
           ).then(
             () => {
               // Artificial wait for timing attack challenge
               setTimeout(function () {
-                db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
+                db.reviewsCollection.findOne({ _id: id }, { runValidators: true }).then((review: Review) => {
                   const likedBy = review.likedBy
                   likedBy.push(user.data.email)
                   let count = 0
@@ -40,7 +47,8 @@ module.exports = function productReviews () {
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
                   db.reviewsCollection.update(
                     { _id: id },
-                    { $set: { likedBy } }
+                    { $set: { likedBy } },
+                    { runValidators: true }
                   ).then(
                     (result: any) => {
                       res.json(result)
