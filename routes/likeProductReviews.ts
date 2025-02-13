@@ -13,8 +13,14 @@ const security = require('../lib/insecurity')
 
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
-    const id = req.body.id
     const user = security.authenticatedUsers.from(req)
+    
+    if (!req.body || typeof req.body.id !== 'string' || !req.body.id.trim()) {
+      res.status(400).json({ error: 'Invalid review ID' })
+      return
+    }
+    const id = req.body.id.trim()
+    
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
         res.status(404).json({ error: 'Not found' })
@@ -22,7 +28,7 @@ module.exports = function productReviews () {
         const likedBy = review.likedBy
         if (!likedBy.includes(user.data.email)) {
           db.reviewsCollection.update(
-            { _id: id },
+            { _id: id, likedBy: { $exists: true } },
             { $inc: { likesCount: 1 } }
           ).then(
             () => {
@@ -39,7 +45,7 @@ module.exports = function productReviews () {
                   }
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
                   db.reviewsCollection.update(
-                    { _id: id },
+                    { _id: id, likedBy: { $exists: true } },
                     { $set: { likedBy } }
                   ).then(
                     (result: any) => {
