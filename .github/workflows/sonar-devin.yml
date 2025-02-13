@@ -7,7 +7,7 @@ on:
 
 jobs:
   analyze:
-    if: ${{ github.event_name != 'pull_request' || github.actor != 'devin-ai-integration' }}
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.user.login != 'devin-ai-integration' }}
     name: Analyze and Remediate
     runs-on: ubuntu-latest
 
