@@ -39,7 +39,7 @@ module.exports = function productReviews () {
           { _id: reviewId, likedBy: { $exists: true } },
           { $inc: { likesCount: 1 } },
           { runValidators: true }
-          () => {
+        ).then(
             // Artificial wait for timing attack challenge
             setTimeout(function () {
               db.reviewsCollection.findOne({ _id: reviewId }).then((review: Review) => {
