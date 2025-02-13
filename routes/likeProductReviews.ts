@@ -8,6 +8,8 @@ import { type Request, type Response, type NextFunction } from 'express'
 import { type Review } from '../data/types'
 import * as db from '../data/mongodb'
 import { challenges } from '../data/datacache'
+import { ObjectId } from 'mongodb'
+import { isValidObjectId } from 'mongoose'
 
 const security = require('../lib/insecurity')
 
@@ -21,20 +23,26 @@ module.exports = function productReviews () {
     }
     const id = req.body.id.trim()
     
-    db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
+    // Validate id is a valid MongoDB ObjectId
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ error: 'Invalid review ID format' })
+    }
+    
+    const reviewId = new ObjectId(id)
+    db.reviewsCollection.findOne({ _id: reviewId }).then((review: Review) => {
       if (!review) {
         res.status(404).json({ error: 'Not found' })
       } else {
         const likedBy = review.likedBy
         if (!likedBy.includes(user.data.email)) {
           db.reviewsCollection.update(
-            { _id: id, likedBy: { $exists: true } },
+            { _id: reviewId, likedBy: { $exists: true } },
             { $inc: { likesCount: 1 } }
           ).then(
             () => {
               // Artificial wait for timing attack challenge
               setTimeout(function () {
-                db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
+                db.reviewsCollection.findOne({ _id: reviewId }).then((review: Review) => {
                   const likedBy = review.likedBy
                   likedBy.push(user.data.email)
                   let count = 0
@@ -45,7 +53,7 @@ module.exports = function productReviews () {
                   }
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
                   db.reviewsCollection.update(
-                    { _id: id, likedBy: { $exists: true } },
+                    { _id: reviewId, likedBy: { $exists: true } },
                     { $set: { likedBy } }
                   ).then(
                     (result: any) => {
