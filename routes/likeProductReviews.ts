@@ -8,6 +8,7 @@ import { type Request, type Response, type NextFunction } from 'express'
 import { type Review } from '../data/types'
 import * as db from '../data/mongodb'
 import { challenges } from '../data/datacache'
+import { ObjectId as MongoObjectId } from 'mongodb'
 
 import * as security from '../lib/insecurity'
 
@@ -18,7 +19,7 @@ export default function productReviews () {
       if (!req.body.id || typeof req.body.id !== 'string') {
         throw new Error('Invalid id parameter')
       }
-      id = new ObjectId(req.body.id).toHexString()
+      id = new MongoObjectId(req.body.id).toHexString()
     } catch (error) {
       return res.status(400).json({ error: 'Invalid review ID format' })
     }
@@ -29,7 +30,7 @@ export default function productReviews () {
     }
 
     db.reviewsCollection.findOne(
-      { _id: new ObjectId(id) },
+      { _id: new MongoObjectId(id) },
       { projection: { likedBy: 1, likesCount: 1 } }
     ).then((review: Review) => {
       if (!review) {
@@ -38,7 +39,7 @@ export default function productReviews () {
         const likedBy = review.likedBy
         if (!likedBy.includes(user.data.email)) {
           db.reviewsCollection.updateOne(
-            { _id: new ObjectId(id) },
+            { _id: new MongoObjectId(id) },
             { $inc: { likesCount: 1 } },
             { runValidators: true, upsert: false }
           ).then(
@@ -46,7 +47,7 @@ export default function productReviews () {
               // Artificial wait for timing attack challenge
               setTimeout(function () {
                 db.reviewsCollection.findOne(
-                  { _id: new ObjectId(id) },
+                  { _id: new MongoObjectId(id) },
                   { projection: { likedBy: 1, likesCount: 1 } }
                 ).then((review: Review) => {
                   if (!review?.likedBy) {
@@ -63,7 +64,7 @@ export default function productReviews () {
                   }
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
                   db.reviewsCollection.updateOne(
-                    { _id: new ObjectId(id) },
+                    { _id: new MongoObjectId(id) },
                     { $set: { likedBy: likedBy.map(email => String(email)) } },
                     { runValidators: true, upsert: false }
                   ).then(
