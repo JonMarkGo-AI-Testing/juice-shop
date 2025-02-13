@@ -13,30 +13,40 @@ import * as security from '../lib/insecurity'
 
 export default function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
-    const id = req.body.id
-    if (!id || typeof id !== 'string') {
-      return res.status(400).json({ error: 'Invalid review ID' })
+    let id: string
+    try {
+      if (!req.body.id || typeof req.body.id !== 'string') {
+        throw new Error('Invalid id parameter')
+      }
+      id = new ObjectId(req.body.id).toHexString()
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid review ID format' })
     }
+
     const user = security.authenticatedUsers.from(req)
     if (!user?.data?.email) {
       return res.status(401).json({ error: 'Authentication required' })
     }
-    db.reviewsCollection.findOne({ _id: id }, { projection: { likedBy: 1, likesCount: 1 } }).then((review: Review) => {
+
+    db.reviewsCollection.findOne(
+      { _id: new ObjectId(id) },
+      { projection: { likedBy: 1, likesCount: 1 } }
+    ).then((review: Review) => {
       if (!review) {
         res.status(404).json({ error: 'Not found' })
       } else {
         const likedBy = review.likedBy
         if (!likedBy.includes(user.data.email)) {
           db.reviewsCollection.updateOne(
-            { _id: id },
+            { _id: new ObjectId(id) },
             { $inc: { likesCount: 1 } },
-            { runValidators: true }
+            { runValidators: true, upsert: false }
           ).then(
             () => {
               // Artificial wait for timing attack challenge
               setTimeout(function () {
                 db.reviewsCollection.findOne(
-                  { _id: id },
+                  { _id: new ObjectId(id) },
                   { projection: { likedBy: 1, likesCount: 1 } }
                 ).then((review: Review) => {
                   if (!review?.likedBy) {
@@ -53,9 +63,9 @@ export default function productReviews () {
                   }
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
                   db.reviewsCollection.updateOne(
-                    { _id: id },
-                    { $set: { likedBy } },
-                    { runValidators: true }
+                    { _id: new ObjectId(id) },
+                    { $set: { likedBy: likedBy.map(email => String(email)) } },
+                    { runValidators: true, upsert: false }
                   ).then(
                     (result: any) => {
                       res.json(result)
