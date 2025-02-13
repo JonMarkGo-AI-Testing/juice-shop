@@ -8,12 +8,16 @@ import { type Request, type Response, type NextFunction } from 'express'
 import { type Review } from '../data/types'
 import * as db from '../data/mongodb'
 import { challenges } from '../data/datacache'
+import { sanitizeSecure } from '../lib/insecurity'
 
 const security = require('../lib/insecurity')
 
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
-    const id = req.body.id
+    const id = sanitizeSecure(String(req.body.id))
+    if (!id || id.length < 1) {
+      return res.status(400).json({ error: 'Invalid review ID' })
+    }
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
@@ -23,7 +27,8 @@ module.exports = function productReviews () {
         if (!likedBy.includes(user.data.email)) {
           db.reviewsCollection.update(
             { _id: id },
-            { $inc: { likesCount: 1 } }
+            { $inc: { likesCount: 1 } },
+            { multi: false }
           ).then(
             () => {
               // Artificial wait for timing attack challenge
@@ -40,7 +45,8 @@ module.exports = function productReviews () {
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
                   db.reviewsCollection.update(
                     { _id: id },
-                    { $set: { likedBy } }
+                    { $set: { likedBy: likedBy.map(email => sanitizeSecure(email)) } },
+                    { multi: false }
                   ).then(
                     (result: any) => {
                       res.json(result)
