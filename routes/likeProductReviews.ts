@@ -14,16 +14,21 @@ const security = require('../lib/insecurity')
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.body.id
+    if (!id || typeof id !== 'string') {
+      res.status(400).json({ error: 'Invalid review ID' })
+      return
+    }
     const user = security.authenticatedUsers.from(req)
-    db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
+    db.reviewsCollection.findOne({ _id: id, author: { $exists: true } }).then((review: Review) => {
       if (!review) {
         res.status(404).json({ error: 'Not found' })
       } else {
         const likedBy = review.likedBy
         if (!likedBy.includes(user.data.email)) {
           db.reviewsCollection.update(
-            { _id: id },
-            { $inc: { likesCount: 1 } }
+            { _id: id, author: { $exists: true } },
+            { $inc: { likesCount: 1 } },
+            { multi: false }
           ).then(
             () => {
               // Artificial wait for timing attack challenge
@@ -39,8 +44,9 @@ module.exports = function productReviews () {
                   }
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
                   db.reviewsCollection.update(
-                    { _id: id },
-                    { $set: { likedBy } }
+                    { _id: id, author: { $exists: true } },
+                    { $set: { likedBy } },
+                    { multi: false }
                   ).then(
                     (result: any) => {
                       res.json(result)
