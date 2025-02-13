@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Check author
-        if: ${{ github.event.pull_request.user.login == 'devin-ai-integration' }}
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'devin-ai-integration' }}
         run: |
           echo "Exiting workflow because the pull request was created by devin-ai-integration"
           exit 1
