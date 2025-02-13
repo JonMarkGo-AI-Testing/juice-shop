@@ -60,6 +60,9 @@ export const decode = (token: string) => { return jws.decode(token)?.payload }
 export const sanitizeHtml = (html: string) => sanitizeHtmlLib(html)
 export const sanitizeLegacy = (input = '') => input.replace(/<(?:\w+)\W+?[\w]/gi, '')
 export const sanitizeFilename = (filename: string) => sanitizeFilenameLib(filename)
+export const sanitizeMongoId = (id: any): string | null => {
+  return id && typeof id === 'string' && id.match(/^[0-9a-fA-F]{24}$/) ? id : null
+}
 export const sanitizeSecure = (html: string): string => {
   const sanitized = sanitizeHtml(html)
   if (sanitized === html) {
