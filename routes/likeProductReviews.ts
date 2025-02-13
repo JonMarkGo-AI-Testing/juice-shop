@@ -39,9 +39,9 @@ module.exports = function productReviews () {
           { _id: reviewId, likedBy: { $exists: true } },
           { $inc: { likesCount: 1 } },
           { runValidators: true }
-        ).then(
+        ).then(() => {
             // Artificial wait for timing attack challenge
-            setTimeout(function () {
+            setTimeout(() => {
               db.reviewsCollection.findOne({ _id: reviewId }).then((review: Review) => {
                 const likedBy = review.likedBy
                 likedBy.push(user.data.email)
