@@ -151,19 +151,28 @@ module.exports = function placeOrder () {
             })
           }
 
-          db.ordersCollection.insert({
-            promotionalAmount: discountAmount,
-            paymentId: req.body.orderDetails ? req.body.orderDetails.paymentId : null,
-            addressId: req.body.orderDetails ? req.body.orderDetails.addressId : null,
-            orderId,
+          const orderData = {
+            promotionalAmount: String(discountAmount),
+            paymentId: req.body.orderDetails?.paymentId ? String(req.body.orderDetails.paymentId) : null,
+            addressId: req.body.orderDetails?.addressId ? String(req.body.orderDetails.addressId) : null,
+            orderId: String(orderId),
             delivered: false,
-            email: (email ? email.replace(/[aeiou]/gi, '*') : undefined),
-            totalPrice,
-            products: basketProducts,
-            bonus: totalPoints,
-            deliveryPrice: deliveryAmount,
-            eta: deliveryMethod.eta.toString()
-          }).then(() => {
+            email: email ? email.replace(/[aeiou]/gi, '*') : undefined,
+            totalPrice: Number(totalPrice),
+            products: basketProducts.map(p => ({
+              quantity: Number(p.quantity),
+              id: p.id ? Number(p.id) : null,
+              name: String(p.name),
+              price: Number(p.price),
+              total: Number(p.total),
+              bonus: Number(p.bonus)
+            })),
+            bonus: Number(totalPoints),
+            deliveryPrice: Number(deliveryAmount),
+            eta: String(deliveryMethod.eta)
+          }
+          
+          db.ordersCollection.insertOne(orderData).then(() => {
             doc.end()
           })
         } else {
