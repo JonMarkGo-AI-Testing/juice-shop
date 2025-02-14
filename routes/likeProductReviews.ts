@@ -14,6 +14,9 @@ const security = require('../lib/insecurity')
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.body.id
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'Invalid review ID' })
+    }
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
@@ -22,7 +25,7 @@ module.exports = function productReviews () {
         const likedBy = review.likedBy
         if (!likedBy.includes(user.data.email)) {
           db.reviewsCollection.update(
-            { _id: id },
+            { _id: id, likedBy: { $ne: user.data.email } },
             { $inc: { likesCount: 1 } }
           ).then(
             () => {
@@ -39,8 +42,8 @@ module.exports = function productReviews () {
                   }
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
                   db.reviewsCollection.update(
-                    { _id: id },
-                    { $set: { likedBy } }
+                    { _id: id, likedBy: { $ne: user.data.email } },
+                    { $push: { likedBy: user.data.email } }
                   ).then(
                     (result: any) => {
                       res.json(result)
