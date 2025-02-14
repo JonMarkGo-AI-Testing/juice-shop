@@ -62,5 +62,8 @@ config/*.yml
 !config/tutorial.yml
 !config/oss.yml
 
+# Encryption Keys
+encryptionkeys/*.key
+
 # System Files
 .DS_Store
