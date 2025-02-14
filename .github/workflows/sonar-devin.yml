@@ -6,7 +6,15 @@ on:
       - 'master'
 jobs:
   analyze:
-    if: ${{ github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.actor != 'github-actions[bot]') }}
+    if: >
+      ${{ 
+        github.event_name != 'pull_request' || 
+        (
+          github.event_name == 'pull_request' && 
+          github.actor != 'github-actions[bot]' &&
+          !startsWith(github.head_ref, 'devin/')
+        )
+      }}
     name: Analyze and Remediate
     runs-on: ubuntu-latest
 
