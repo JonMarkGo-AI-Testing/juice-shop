@@ -6,25 +6,36 @@ on:
       - 'master'
 jobs:
   analyze:
-    if: >
-      ${{ 
-        github.event_name != 'pull_request' || 
-        (
-          github.event_name == 'pull_request' && 
-          github.actor != 'github-actions[bot]' &&
-          github.actor != 'devin-ai-integration' &&
-          !startsWith(github.head_ref, 'devin/')
-        )
-      }}
     name: Analyze and Remediate
     runs-on: ubuntu-latest
-
     steps:
+      - name: Debug Trigger Info
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Head ref: ${{ github.head_ref }}"
+          echo "Sender type: ${{ github.event.sender.type }}"
+          echo "PR user login: ${{ github.event.pull_request.user.login }}"
+          
+      - name: Check Run Conditions
+        id: should_run
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            if [[ "${{ github.event.pull_request.user.login }}" == "devin-ai-integration" ]] || 
+               [[ "${{ github.actor }}" == "devin-ai-integration" ]] ||
+               [[ "${{ github.head_ref }}" == devin/* ]]; then
+              echo "Skipping workflow due to PR from automated user or devin branch"
+              exit 1
+            fi
+          fi
+          
       - uses: actions/checkout@v4
+        if: success()
         with:
           fetch-depth: 0
-
+          
       - name: SonarCloud Scan
+        if: success()
         uses: SonarSource/sonarqube-scan-action@v4
         with:
           args: >
@@ -35,21 +46,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
-
+          
       - name: Setup Python
+        if: success()
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-
+          
       - name: Install Dependencies
+        if: success()
         run: pip install aiohttp
-
+        
       - name: Configure Git
+        if: success()
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-
+          
       - name: Run Devin Remediation
+        if: success()
         env:
           DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -60,16 +75,8 @@ jobs:
           echo "Starting Devin Remediation script..."
           python .github/scripts/devin_remediation.py
           echo "Devin Remediation script finished."
-
-          echo "Checking environment variables..."
-          echo "DEVIN_API_KEY (first 5 chars): ${{ secrets.DEVIN_API_KEY }}" | cut -c -5
-          echo "SONAR_TOKEN (first 5 chars): ${{ secrets.SONAR_TOKEN }}" | cut -c -5
-          echo "GITHUB_TOKEN (first 5 chars): ${{ secrets.GITHUB_TOKEN }}" | cut -c -5
-          echo "SONAR_ORG: ${{ secrets.SONAR_ORG }}"
-          echo "SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}"
-
+          
       - name: Handle Errors
         if: failure()
         run: |
           echo "An error occurred during the workflow!"
-          # You can add more specific error handling here, like sending notifications
