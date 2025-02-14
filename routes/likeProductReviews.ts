@@ -13,6 +13,10 @@ const security = require('../lib/insecurity')
 
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
+    if (typeof req.body.id !== 'string') {
+      res.status(400).json({ error: 'Invalid id parameter' })
+      return
+    }
     const id = req.body.id
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
@@ -22,7 +26,7 @@ module.exports = function productReviews () {
         const likedBy = review.likedBy
         if (!likedBy.includes(user.data.email)) {
           db.reviewsCollection.update(
-            { _id: id },
+            { _id: id, likedBy: { $ne: user.data.email } },
             { $inc: { likesCount: 1 } }
           ).then(
             () => {
@@ -39,8 +43,8 @@ module.exports = function productReviews () {
                   }
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
                   db.reviewsCollection.update(
-                    { _id: id },
-                    { $set: { likedBy } }
+                    { _id: id, likedBy: { $ne: user.data.email } },
+                    { $push: { likedBy: user.data.email } }
                   ).then(
                     (result: any) => {
                       res.json(result)
