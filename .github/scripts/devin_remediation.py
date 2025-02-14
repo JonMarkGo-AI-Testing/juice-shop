@@ -22,6 +22,7 @@ async def get_sonarcloud_issues():
         "statuses": "OPEN"
     }
     
+    print("Fetching SonarCloud issues with params:", params)
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, params=params) as response:
             if response.status != 200:
@@ -35,9 +36,14 @@ async def delegate_task_to_devin(issue):
     """Delegate the entire task of fixing, committing, and pushing to Devin AI."""
     async with aiohttp.ClientSession() as session:
         headers = {"Authorization": f"Bearer {DEVIN_API_KEY}"}
+        
+        # Add timestamp to make branch name unique
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        branch_name = f"devin/fix-{timestamp}-{issue['key']}"
+        
         prompt = f"""
         Fix the following vulnerability in {GITHUB_REPOSITORY}: {issue['message']} in file {issue['component']}.
-        1. Create a new branch named 'devin/{issue['key']}-fix-vulnerability'.
+        1. Create a new branch named '{branch_name}'.
         2. Implement the fix.
         3. Write a detailed commit message explaining the changes:
             - Issue Key: {issue['key']}
@@ -48,6 +54,7 @@ async def delegate_task_to_devin(issue):
         5. Open a pull request with a description of the fix.
         """
         
+        print(f"Creating Devin session with branch: {branch_name}")
         data = {"prompt": prompt, "idempotent": True}
         
         async with session.post(f"{DEVIN_API_BASE}/sessions", json=data, headers=headers) as response:
@@ -71,6 +78,7 @@ async def monitor_devin_session(session_id):
                 
                 result = await response.json()
                 status = result.get("status_enum")
+                print(f"Devin session status: {status}")
                 
                 if status in ["completed", "stopped"]:
                     print(f"Devin completed the task: {result}")
@@ -83,6 +91,7 @@ async def monitor_devin_session(session_id):
 
 async def main():
     try:
+        print("Starting main execution...")
         issues = await get_sonarcloud_issues()
         
         for issue in issues:
@@ -93,6 +102,7 @@ async def main():
             
             if session_data:
                 session_id = session_data["session_id"]
+                print(f"Monitoring session: {session_id}")
                 
                 # Monitor Devin's progress
                 await monitor_devin_session(session_id)
