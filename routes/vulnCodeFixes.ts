@@ -4,8 +4,9 @@ import * as accuracy from '../lib/accuracy'
 const challengeUtils = require('../lib/challengeUtils')
 const fs = require('fs')
 const yaml = require('js-yaml')
+const path = require('path')
 
-const FixesDir = 'data/static/codefixes'
+const FixesDir = path.resolve('data/static/codefixes')
 
 interface codeFix {
   fixes: string[]
@@ -25,7 +26,11 @@ export const readFixes = (key: string) => {
   let correct: number = -1
   for (const file of files) {
     if (file.startsWith(`${key}_`)) {
-      const fix = fs.readFileSync(`${FixesDir}/${file}`).toString()
+      const safePath = path.join(FixesDir, path.basename(file))
+      if (!safePath.startsWith(FixesDir)) {
+        continue
+      }
+      const fix = fs.readFileSync(safePath).toString()
       const metadata = file.split('_')
       const number = metadata[1]
       fixes.push(fix)
@@ -76,8 +81,15 @@ export const checkCorrectFix = () => async (req: Request<Record<string, unknown>
     })
   } else {
     let explanation
-    if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
-      const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
+    const infoPath = path.join(FixesDir, path.basename(key + '.info.yml'))
+    if (!infoPath.startsWith(FixesDir)) {
+      res.status(404).json({
+        error: 'Invalid key provided'
+      })
+      return
+    }
+    if (fs.existsSync(infoPath)) {
+      const codingChallengeInfos = yaml.load(fs.readFileSync(infoPath, 'utf8'))
       const selectedFixInfo = codingChallengeInfos?.fixes.find(({ id }: { id: number }) => id === selectedFix + 1)
       if (selectedFixInfo?.explanation) explanation = res.__(selectedFixInfo.explanation)
     }
