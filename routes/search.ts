@@ -30,7 +30,7 @@ module.exports = function searchProducts () {
         const dataString = JSON.stringify(products)
         if (challengeUtils.notSolved(challenges.unionSqlInjectionChallenge)) { // vuln-code-snippet hide-start
           let solved = true
-          UserModel.findAll().then(data => {
+          UserModel.findAll().then((data: any) => {
             const users = utils.queryResultToJson(data)
             if (users.data?.length) {
               for (let i = 0; i < users.data.length; i++) {
