@@ -12,54 +12,53 @@ import { challenges } from '../data/datacache'
 const security = require('../lib/insecurity')
 
 module.exports = function productReviews () {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const id = req.body.id
-    const user = security.authenticatedUsers.from(req)
-    db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = req.body.id
+      if (!id || typeof id !== 'string') {
+        res.status(400).json({ error: 'Invalid review ID' })
+        return
+      }
+      const user = security.authenticatedUsers.from(req)
+      if (!user?.data?.email) {
+        res.status(401).json({ error: 'Authentication required' })
+        return
+      }
+      const review = await db.reviewsCollection.findOne({ _id: id })
       if (!review) {
         res.status(404).json({ error: 'Not found' })
-      } else {
-        const likedBy = review.likedBy
-        if (!likedBy.includes(user.data.email)) {
-          db.reviewsCollection.update(
-            { _id: id },
-            { $inc: { likesCount: 1 } }
-          ).then(
-            () => {
-              // Artificial wait for timing attack challenge
-              setTimeout(function () {
-                db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
-                  const likedBy = review.likedBy
-                  likedBy.push(user.data.email)
-                  let count = 0
-                  for (let i = 0; i < likedBy.length; i++) {
-                    if (likedBy[i] === user.data.email) {
-                      count++
-                    }
-                  }
-                  challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
-                  db.reviewsCollection.update(
-                    { _id: id },
-                    { $set: { likedBy } }
-                  ).then(
-                    (result: any) => {
-                      res.json(result)
-                    }, (err: unknown) => {
-                      res.status(500).json(err)
-                    })
-                }, () => {
-                  res.status(400).json({ error: 'Wrong Params' })
-                })
-              }, 150)
-            }, (err: unknown) => {
-              res.status(500).json(err)
-            })
-        } else {
-          res.status(403).json({ error: 'Not allowed' })
-        }
+        return
       }
-    }, () => {
-      res.status(400).json({ error: 'Wrong Params' })
-    })
+      
+      const likedBy = review.likedBy
+      if (!likedBy.includes(user.data.email)) {
+        // Use atomic update operation with validated id
+        await db.reviewsCollection.update(
+          { _id: id, likedBy: { $ne: user.data.email } },
+          { 
+            $inc: { likesCount: 1 },
+            $push: { likedBy: user.data.email }
+          }
+        )
+        
+        // Artificial wait for timing attack challenge
+        await new Promise(resolve => setTimeout(resolve, 150))
+        
+        const updatedReview = await db.reviewsCollection.findOne({ _id: id })
+        if (!updatedReview) {
+          res.status(404).json({ error: 'Review not found' })
+          return
+        }
+        
+        // Count occurrences of user's email in likedBy array
+        const count = updatedReview.likedBy.filter(email => email === user.data.email).length
+        challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
+        res.json({ modified: 1 })
+      } else {
+        res.status(403).json({ error: 'Not allowed' })
+      }
+    } catch (err) {
+      res.status(500).json({ error: 'Internal server error' })
+    }
   }
 }
