@@ -8,14 +8,20 @@ import { type Request, type Response, type NextFunction } from 'express'
 import { type Review } from '../data/types'
 import * as db from '../data/mongodb'
 import { challenges } from '../data/datacache'
+import { ObjectId } from 'mongodb'
 
 const security = require('../lib/insecurity')
 
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
-    const id = req.body.id
     const user = security.authenticatedUsers.from(req)
-    db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
+    
+    try {
+      if (!req.body.id || typeof req.body.id !== 'string') {
+        return res.status(400).json({ error: 'Invalid review ID format' })
+      }
+      const id = new ObjectId(req.body.id)
+      db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
         res.status(404).json({ error: 'Not found' })
       } else {
@@ -61,5 +67,12 @@ module.exports = function productReviews () {
     }, () => {
       res.status(400).json({ error: 'Wrong Params' })
     })
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('ObjectId')) {
+        res.status(400).json({ error: 'Invalid review ID format' })
+      } else {
+        res.status(500).json({ error: 'Internal server error' })
+      }
+    }
   }
 }
