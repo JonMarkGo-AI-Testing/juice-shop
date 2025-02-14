@@ -9,11 +9,24 @@ import { type Review } from '../data/types'
 import * as db from '../data/mongodb'
 import { challenges } from '../data/datacache'
 
+import { Types } from 'mongoose'
 const security = require('../lib/insecurity')
+
+// Add MongoDB ID sanitization to security utils
+security.sanitizeMongoId = (id: string): string => {
+  try {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new Error('Invalid MongoDB ID')
+    }
+    return id
+  } catch (error) {
+    throw new Error('Invalid MongoDB ID')
+  }
+}
 
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
-    const id = req.body.id
+    const id = security.sanitizeMongoId(req.body.id)
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
