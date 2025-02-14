@@ -12,6 +12,7 @@ jobs:
         (
           github.event_name == 'pull_request' && 
           github.actor != 'github-actions[bot]' &&
+          github.actor != 'devin-ai-integration' &&
           !startsWith(github.head_ref, 'devin/')
         )
       }}
