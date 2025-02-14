@@ -30,7 +30,7 @@ module.exports = function productReviews () {
       }
 
       // Update only the specific review owned by the user
-      const result = await db.reviewsCollection.update(
+      return db.reviewsCollection.update(
         { _id: req.body.id, author: user.data.email },
         { $set: { message: req.body.message } }
       ).then(
@@ -41,6 +41,9 @@ module.exports = function productReviews () {
       }, (err: unknown) => {
         res.status(500).json(err)
       })
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' })
+    }
   }
 }
 // vuln-code-snippet end noSqlReviewsChallenge forgedReviewChallenge
