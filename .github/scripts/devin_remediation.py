@@ -57,7 +57,7 @@ async def delegate_tasks_to_devin(issues):
             prompts.append(prompt)
         
         # Combine all prompts into one
-        combined_prompt = "\n\n".join(prompts)
+        combined_prompt = "\\n\\n".join(prompts)
         
         print(f"Creating Devin session with branch: {branch_name}")
         data = {"prompt": combined_prompt, "idempotent": True}
