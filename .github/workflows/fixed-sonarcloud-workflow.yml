@@ -59,12 +59,22 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           SONAR_ORG: ${{ secrets.SONAR_ORG }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           echo "Starting Devin Remediation script..."
+          # This script will:
+          # 1. Fetch vulnerabilities from SonarCloud
+          # 2. Create a Devin session with a prompt for each vulnerability
+          # 3. The prompt will instruct Devin to:
+          #    - Create a branch
+          #    - Fix the vulnerability
+          #    - Commit with detailed message
+          #    - The format matches what's in devin_remediation.py
           python .github/scripts/devin_remediation.py
           echo "Devin Remediation script finished."
           
       # Add PR creation step using peter-evans/create-pull-request action
+      # This is a fallback in case the Devin API doesn't create a PR
       - name: Create Pull Request if needed
         uses: peter-evans/create-pull-request@v5
         with:
@@ -75,6 +85,14 @@ jobs:
             This PR contains automated fixes for security issues identified by SonarCloud.
             
             Fixed by Devin AI Remediation workflow.
+            
+            The fixes address vulnerabilities found by SonarCloud scan.
+            Each fix includes:
+            - Issue Key from SonarCloud
+            - Component path
+            - Timestamp of fix
+            
+            Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
           branch: devin/auto-fix-${{ github.run_id }}
           base: master
           
