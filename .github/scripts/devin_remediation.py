@@ -32,30 +32,35 @@ async def get_sonarcloud_issues():
             print(f"Found {len(result.get('issues', []))} issues")
             return result.get('issues', [])
 
-async def delegate_task_to_devin(issue):
-    """Delegate the entire task of fixing, committing, and pushing to Devin AI."""
+async def delegate_tasks_to_devin(issues):
+    """Delegate the entire task of fixing, committing, and pushing to Devin AI for all issues."""
     async with aiohttp.ClientSession() as session:
         headers = {"Authorization": f"Bearer {DEVIN_API_KEY}"}
         
         # Add timestamp to make branch name unique
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        branch_name = f"devin/fix-{timestamp}-{issue['key']}"
+        branch_name = f"devin/fix-{timestamp}"
         
-        prompt = f"""
-        Fix the following vulnerability in {GITHUB_REPOSITORY}: {issue['message']} in file {issue['component']}.
-        1. Create a new branch named '{branch_name}'.
-        2. Implement the fix.
-        3. Write a detailed commit message explaining the changes:
-            - Issue Key: {issue['key']}
-            - Component: {issue['component']}
-            - Fixed by Devin AI at {datetime.now().isoformat()}
-            - Include 'Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>'.
-        4. Push the branch to the remote repository.
-        5. Open a pull request with a description of the fix.
-        """
+        prompts = []
+        
+        for issue in issues:
+            prompt = f"""
+            Fix the following vulnerability in {GITHUB_REPOSITORY}: {issue['message']} in file {issue['component']}.
+            1. Create a new branch named '{branch_name}' if it doesn't exist.
+            2. Implement the fix.
+            3. Write a detailed commit message explaining the changes:
+                - Issue Key: {issue['key']}
+                - Component: {issue['component']}
+                - Fixed by Devin AI at {datetime.now().isoformat()}
+                - Include 'Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>'.
+            """
+            prompts.append(prompt)
+        
+        # Combine all prompts into one
+        combined_prompt = "\n\n".join(prompts)
         
         print(f"Creating Devin session with branch: {branch_name}")
-        data = {"prompt": prompt, "idempotent": True}
+        data = {"prompt": combined_prompt, "idempotent": True}
         
         async with session.post(f"{DEVIN_API_BASE}/sessions", json=data, headers=headers) as response:
             if response.status != 200:
@@ -94,11 +99,11 @@ async def main():
         print("Starting main execution...")
         issues = await get_sonarcloud_issues()
         
-        for issue in issues:
-            print(f"Processing issue: {issue['key']}")
+        if issues:
+            print(f"Processing {len(issues)} issues")
             
-            # Delegate task to Devin AI
-            session_data = await delegate_task_to_devin(issue)
+            # Delegate tasks to Devin AI
+            session_data = await delegate_tasks_to_devin(issues)
             
             if session_data:
                 session_id = session_data["session_id"]
