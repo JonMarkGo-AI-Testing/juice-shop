@@ -43,51 +43,6 @@ async def delegate_task_to_devin(issue):
         log(f"Unexpected error when creating Devin session: {str(e)}", "ERROR")
         return None
         
-async def delegate_task_to_devin(issue):
-    """Delegate the task of fixing, committing, and pushing to Devin AI."""
-    if not DEVIN_API_KEY:
-        log("DEVIN_API_KEY environment variable is not set", "ERROR")
-        return None
-        
-    try:
-        async with aiohttp.ClientSession() as session:
-            headers = {"Authorization": f"Bearer {DEVIN_API_KEY}"}
-            
-            # Add timestamp to make branch name unique
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            branch_name = f"devin/fix-{timestamp}-{issue['key']}"
-            
-            prompt = f"""
-            Fix the following vulnerability in {GITHUB_REPOSITORY}: {issue['message']} in file {issue['component']}.
-            1. Create a new branch named '{branch_name}'.
-            2. Implement the fix.
-            3. Write a detailed commit message explaining the changes:
-                - Issue Key: {issue['key']}
-                - Component: {issue['component']}
-                - Fixed by Devin AI at {datetime.now().isoformat()}
-                - Include 'Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>'.
-            4. Push the branch to the remote repository.
-            5. Open a pull request with a description of the fix.
-            """
-            
-            log(f"Creating Devin session with branch: {branch_name}")
-            data = {"prompt": prompt, "idempotent": True}
-            
-            async with session.post(f"{DEVIN_API_BASE}/sessions", json=data, headers=headers) as response:
-                if response.status != 200:
-                    log(f"Error delegating task to Devin: {await response.text()}", "ERROR")
-                    return None
-                    
-                result = await response.json()
-                log(f"Devin session created: {json.dumps(result, indent=2)}")
-                return result
-    except aiohttp.ClientError as e:
-        log(f"Network error when connecting to Devin API: {str(e)}", "ERROR")
-        return None
-    except Exception as e:
-        log(f"Unexpected error when creating Devin session: {str(e)}", "ERROR")
-        return None
-        
 async def monitor_devin_session(session_id):
     """Monitor Devin's progress until it completes the task."""
     if not DEVIN_API_KEY:
