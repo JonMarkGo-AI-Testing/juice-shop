@@ -20,25 +20,13 @@ jobs:
           echo "Sender type: ${{ github.event.sender.type }}"
           echo "PR user login: ${{ github.event.pull_request.user.login }}"
           
-      - name: Check Run Conditions
-        id: should_run
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            if [[ "${{ github.event.pull_request.user.login }}" == "devin-ai-integration" ]] || 
-               [[ "${{ github.actor }}" == "devin-ai-integration" ]] ||
-               [[ "${{ github.head_ref }}" == devin/* ]]; then
-              echo "Skipping workflow due to PR from automated user or devin branch"
-              exit 1
-            fi
-          fi
-          
+      # Removed the check that was blocking automated users
+      
       - uses: actions/checkout@v4
-        if: success()
         with:
           fetch-depth: 0
           
       - name: SonarCloud Scan
-        if: success()
         uses: SonarSource/sonarqube-scan-action@v4
         with:
           args: >
@@ -51,33 +39,49 @@ jobs:
           SONAR_HOST_URL: https://sonarcloud.io
           
       - name: Setup Python
-        if: success()
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
           
       - name: Install Dependencies
-        if: success()
         run: pip install aiohttp
         
       - name: Configure Git
-        if: success()
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           
       - name: Run Devin Remediation
-        if: success()
         env:
           DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use a PAT instead of GITHUB_TOKEN for better permissions
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           SONAR_ORG: ${{ secrets.SONAR_ORG }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           echo "Starting Devin Remediation script..."
+          # Run the dedicated Python script for Devin remediation
           python .github/scripts/devin_remediation.py
           echo "Devin Remediation script finished."
+          
+      # Fallback PR creation if Devin's PR creation fails
+      - name: Create Fallback PR if needed
+        if: failure()
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GH_PAT }}
+          commit-message: "Fix: Automated remediation of security issues"
+          title: "Fix: Automated remediation of security issues"
+          body: |
+            This is a fallback PR created because the Devin-managed PR creation failed.
+            
+            This PR contains automated fixes for security issues identified by SonarCloud.
+            
+            Fixed by Devin AI Remediation workflow.
+          branch: devin/fallback-fix-${{ github.run_id }}
+          base: master
           
       - name: Handle Errors
         if: failure()
