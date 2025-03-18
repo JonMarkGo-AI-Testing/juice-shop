@@ -8,6 +8,9 @@ jobs:
   analyze:
     name: Analyze and Remediate
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
     steps:
       - name: Debug Trigger Info
         run: |
