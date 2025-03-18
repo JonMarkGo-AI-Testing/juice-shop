@@ -1,0 +1,31 @@
+name: Create Pull Request
+
+on:
+  push:
+    branches:
+      - devin/fix-20250318222523
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Fix: Prevent NoSQL injection in likeProductReviews.ts"
+          title: "Fix: Prevent NoSQL injection in likeProductReviews.ts"
+          body: |
+            Fixed vulnerability in likeProductReviews.ts by adding input validation to prevent NoSQL injection attacks.
+
+            Issue Key: AZUA2zW8ADRML4DOSiP0
+            Component: JonMarkGo-AI-Testing_juice-shop:routes/likeProductReviews.ts
+            Fixed by Devin AI at 2025-03-18T22:25:23.134091
+
+            Link to Devin run: https://app.devin.ai/sessions/cea0a5a810fb4c5399eca4a2f2cc9568
+          branch: devin/fix-20250318222523
+          base: master
