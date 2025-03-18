@@ -1,0 +1,84 @@
+name: SonarCloud Scan and Devin Remediation
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - 'master'
+jobs:
+  analyze:
+    name: Analyze and Remediate
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - name: Debug Trigger Info
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Head ref: ${{ github.head_ref }}"
+          echo "Sender type: ${{ github.event.sender.type }}"
+          echo "PR user login: ${{ github.event.pull_request.user.login }}"
+          
+      # Removed the check that was blocking automated users
+      
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          args: >
+            -Dsonar.organization=${{ secrets.SONAR_ORG }}
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.sources=.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+          
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          
+      - name: Install Dependencies
+        run: pip install aiohttp
+        
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          
+      - name: Run Devin Remediation
+        env:
+          DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # Use a PAT instead of GITHUB_TOKEN for better permissions
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          SONAR_ORG: ${{ secrets.SONAR_ORG }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+        run: |
+          echo "Starting Devin Remediation script..."
+          python .github/scripts/devin_remediation.py
+          echo "Devin Remediation script finished."
+          
+      # Add PR creation step using peter-evans/create-pull-request action
+      - name: Create Pull Request if needed
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GH_PAT }}
+          commit-message: "Fix: Automated remediation of security issues"
+          title: "Fix: Automated remediation of security issues"
+          body: |
+            This PR contains automated fixes for security issues identified by SonarCloud.
+            
+            Fixed by Devin AI Remediation workflow.
+          branch: devin/auto-fix-${{ github.run_id }}
+          base: master
+          
+      - name: Handle Errors
+        if: failure()
+        run: |
+          echo "An error occurred during the workflow!"
