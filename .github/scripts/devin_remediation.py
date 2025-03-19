@@ -1,7 +1,65 @@
 import asyncio
 import aiohttp
 import os
+import json
+import sys
+import time
+import base64
 from datetime import datetime
+
+# Constants
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
+DEVIN_API_KEY = os.getenv("DEVIN_API_KEY")
+DEVIN_API_BASE = "https://api.cognition-labs.com/v1"
+SONAR_TOKEN = os.getenv("SONAR_TOKEN")
+SONAR_ORG = os.getenv("SONAR_ORG")
+SONAR_PROJECT_KEY = os.getenv("SONAR_PROJECT_KEY")
+
+def log(message, level="INFO"):
+    """Log a message with the specified level."""
+    print(f"{datetime.now().isoformat()} | {level} | {message}")
+
+async def get_sonarcloud_issues():
+    """Retrieve issues from SonarCloud."""
+    if not SONAR_TOKEN or not SONAR_ORG or not SONAR_PROJECT_KEY:
+        log("Missing SonarCloud configuration", "ERROR")
+        return []
+        
+    try:
+        async with aiohttp.ClientSession() as session:
+            auth = aiohttp.BasicAuth(SONAR_TOKEN, '')
+            url = f"https://sonarcloud.io/api/issues/search?projects={SONAR_PROJECT_KEY}&resolved=false&types=VULNERABILITY,BUG"
+            
+            async with session.get(url, auth=auth) as response:
+                if response.status != 200:
+                    log(f"Error retrieving SonarCloud issues: {await response.text()}", "ERROR")
+                    return []
+                    
+                result = await response.json()
+                issues = result.get("issues", [])
+                
+                if not issues:
+                    log("No issues found in SonarCloud")
+                    return []
+                    
+                # Process and format issues
+                formatted_issues = []
+                for issue in issues:
+                    formatted_issue = {
+                        "key": issue.get("key"),
+                        "message": issue.get("message"),
+                        "component": issue.get("component"),
+                        "severity": issue.get("severity"),
+                        "type": issue.get("type")
+                    }
+                    formatted_issues.append(formatted_issue)
+                
+                log(f"Found {len(formatted_issues)} issues in SonarCloud")
+                return formatted_issues
+    except Exception as e:
+        log(f"Unexpected error when retrieving SonarCloud issues: {str(e)}", "ERROR")
+        return []
 
 async def delegate_task_to_devin(issue):
     """Delegate the task of fixing, committing, and pushing to Devin AI."""
@@ -205,7 +263,6 @@ async def create_fallback_pr(issues):
                 report_content += f"- {issue['message']} in {issue['component']}\n"
                 
             # Encode content to base64
-            import base64
             encoded_content = base64.b64encode(report_content.encode()).decode()
             
             # Create the file
