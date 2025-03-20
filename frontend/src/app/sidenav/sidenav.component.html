@@ -45,7 +45,7 @@
     </a>
 
     <mat-list-item *ngIf="isLoggedIn()" (click)="showOrdersSubmenu = !showOrdersSubmenu" class="parent"
-                   aria-label="Show Orders and Payment Menu">
+                   aria-label="Show Orders and Payment Menu" onKeyDown="showOrdersSubmenu = !showOrdersSubmenu">
       <mat-icon>
         check_circle_outline
       </mat-icon>
@@ -106,7 +106,7 @@
     </div>
 
     <mat-list-item *ngIf="isLoggedIn()" (click)="showPrivacySubmenu = !showPrivacySubmenu" class="parent"
-                   aria-label="Show Privacy and Security Menu">
+                   aria-label="Show Privacy and Security Menu" onKeyDown="showPrivacySubmenu = !showPrivacySubmenu">
       <mat-icon>
         security
       </mat-icon>
