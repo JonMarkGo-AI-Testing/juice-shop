@@ -59,16 +59,16 @@
              <mat-footer-cell *matFooterCellDef>
                 <table class="mat-table">
                    <tr class="mat-row">
-                      <td translate>ITEMS</td>
+                      <th translate>ITEMS</th>
                    </tr>
                    <tr class="mat-row">
-                      <td translate>DELIVERY</td>
+                      <th translate>DELIVERY</th>
                    </tr>
                    <tr class="mat-row">
-                      <td translate>PROMOTION</td>
+                      <th translate>PROMOTION</th>
                    </tr>
                    <tr class="mat-row" style="font-weight: bold;">
-                      <td translate>LABEL_TOTAL_PRICE</td>
+                      <th translate>LABEL_TOTAL_PRICE</th>
                    </tr>
                 </table>
              </mat-footer-cell>
@@ -79,16 +79,16 @@
              <mat-footer-cell *matFooterCellDef>
                 <table class="price-align">
                    <tr class="mat-row">
-                      <td>{{ orderDetails.itemTotal?.toFixed(2) }}&curren;</td>
+                      <th>{{ orderDetails.itemTotal?.toFixed(2) }}&curren;</th>
                    </tr>
                    <tr class="mat-row">
-                      <td>{{ deliveryPrice.toFixed(2) }}&curren;</td>
+                      <th>{{ deliveryPrice.toFixed(2) }}&curren;</th>
                    </tr>
                    <tr class="mat-row">
-                      <td>{{ promotionalDiscount.toFixed(2) }}&curren;</td>
+                      <th>{{ promotionalDiscount.toFixed(2) }}&curren;</th>
                    </tr>
                    <tr class="mat-row" style="font-weight: bold;">
-                      <td>{{ orderDetails.totalPrice?.toFixed(2) }}&curren;</td>
+                      <th>{{ orderDetails.totalPrice?.toFixed(2) }}&curren;</th>
                    </tr>
                 </table>
              </mat-footer-cell>
