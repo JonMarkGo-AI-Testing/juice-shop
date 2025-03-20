@@ -151,10 +151,30 @@ module.exports = function placeOrder () {
             })
           }
 
+          // Validate paymentId and addressId to prevent NoSQL injection
+          let paymentId = null
+          let addressId = null
+          if (req.body.orderDetails) {
+            // Validate paymentId
+            if (req.body.orderDetails.paymentId) {
+              if (typeof req.body.orderDetails.paymentId === 'string') {
+                paymentId = req.body.orderDetails.paymentId
+              }
+            }
+            
+            // Validate addressId
+            if (req.body.orderDetails.addressId) {
+              if (typeof req.body.orderDetails.addressId === 'string' || 
+                  typeof req.body.orderDetails.addressId === 'number') {
+                addressId = req.body.orderDetails.addressId
+              }
+            }
+          }
+
           db.ordersCollection.insert({
             promotionalAmount: discountAmount,
-            paymentId: req.body.orderDetails ? req.body.orderDetails.paymentId : null,
-            addressId: req.body.orderDetails ? req.body.orderDetails.addressId : null,
+            paymentId: paymentId,
+            addressId: addressId,
             orderId,
             delivered: false,
             email: (email ? email.replace(/[aeiou]/gi, '*') : undefined),
