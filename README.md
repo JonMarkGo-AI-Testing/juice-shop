@@ -127,6 +127,15 @@ Feel free to have a look at the latest version of OWASP Juice Shop:
 
 ## Documentation
 
+### JWT Configuration
+
+For production environments, set the JWT private key using the environment variable:
+```
+JWT_PRIVATE_KEY=your-private-key-contents
+```
+
+Alternatively, place your RSA private key in the file `encryptionkeys/jwt.key`.
+
 ### Node.js version compatibility
 
 ![GitHub package.json dynamic](https://img.shields.io/github/package-json/cpu/bkimminich/juice-shop)
