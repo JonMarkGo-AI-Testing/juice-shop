@@ -86,7 +86,7 @@
 
           <ng-container matColumnDef="comment">
             <mat-header-cell *matHeaderCellDef translate></mat-header-cell>
-            <mat-cell *matCellDef="let feedback" (click)="showFeedbackDetails(feedback.comment, feedback.UserId)"><p
+            <mat-cell *matCellDef="let feedback" (click)="showFeedbackDetails(feedback.comment, feedback.UserId)" onKeyDown="return false"><p
               [innerHTML]="feedback.comment" matTooltip="Click for more information" matTooltipPosition="above"></p>
             </mat-cell>
           </ng-container>
