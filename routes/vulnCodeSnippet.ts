@@ -71,6 +71,12 @@ export const getVerdict = (vulnLines: number[], neutralLines: number[], selected
   return notOkLines.length === 0
 }
 
+const validateFilename = (filename: string): boolean => {
+  // Only allow alphanumeric characters, underscore, and hyphen
+  const filenameRegex = /^[a-zA-Z0-9_-]+$/
+  return filenameRegex.test(filename)
+}
+
 exports.checkVulnLines = () => async (req: Request<Record<string, unknown>, Record<string, unknown>, VerdictRequestBody>, res: Response, next: NextFunction) => {
   const key = req.body.key
   let snippetData
@@ -90,7 +96,7 @@ exports.checkVulnLines = () => async (req: Request<Record<string, unknown>, Reco
   const selectedLines: number[] = req.body.selectedLines
   const verdict = getVerdict(vulnLines, neutralLines, selectedLines)
   let hint
-  if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
+  if (validateFilename(key) && fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
     const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
     if (codingChallengeInfos?.hints) {
       if (accuracy.getFindItAttempts(key) > codingChallengeInfos.hints.length) {
