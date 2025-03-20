@@ -151,7 +151,7 @@ module.exports = function placeOrder () {
             })
           }
 
-          db.ordersCollection.insert({
+          const orderData = {
             promotionalAmount: discountAmount,
             paymentId: req.body.orderDetails ? req.body.orderDetails.paymentId : null,
             addressId: req.body.orderDetails ? req.body.orderDetails.addressId : null,
@@ -163,7 +163,9 @@ module.exports = function placeOrder () {
             bonus: totalPoints,
             deliveryPrice: deliveryAmount,
             eta: deliveryMethod.eta.toString()
-          }).then(() => {
+          };
+          
+          db.ordersCollection.insert(orderData).then(() => {
             doc.end()
           })
         } else {
