@@ -16,10 +16,20 @@ module.exports = function productReviews () {
   return (req: Request, res: Response) => {
     const user = security.authenticatedUsers.from(req)
     challengeUtils.solveIf(challenges.forgedReviewChallenge, () => { return user && user.data.email !== req.body.author })
+    
+    // Validate and sanitize user inputs
+    const productId = req.params.id
+    if (!productId) {
+      return res.status(400).json({ error: 'Product ID is required' })
+    }
+    
+    const message = req.body.message ? String(req.body.message) : ''
+    const author = req.body.author ? String(req.body.author) : ''
+    
     reviewsCollection.insert({
-      product: req.params.id,
-      message: req.body.message,
-      author: req.body.author,
+      product: productId,
+      message: message,
+      author: author,
       likesCount: 0,
       likedBy: []
     }).then(() => {
