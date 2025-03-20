@@ -17,6 +17,14 @@ module.exports = function profileImageUrlUpload () {
     if (req.body.imageUrl !== undefined) {
       const url = req.body.imageUrl
       if (url.match(/(.)*solve\/challenges\/server-side(.)*/) !== null) req.app.locals.abused_ssrf_bug = true
+      
+      // Validate that URL is a valid external URL
+      if (!utils.isUrl(url)) {
+        res.status(406)
+        next(new Error('Invalid image URL: Must start with http or https'))
+        return
+      }
+      
       const loggedInUser = security.authenticatedUsers.get(req.cookies.token)
       if (loggedInUser) {
         const imageRequest = request
