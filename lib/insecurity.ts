@@ -141,6 +141,24 @@ export const isRedirectAllowed = (url: string) => {
 }
 // vuln-code-snippet end redirectCryptoCurrencyChallenge redirectChallenge
 
+export const imageUrlAllowlist = new Set([
+  'https://placekitten.com',
+  'https://gravatar.com',
+  'https://www.gravatar.com',
+  'https://imgur.com',
+  'https://i.imgur.com'
+])
+
+export const isImageUrlAllowed = (url: string) => {
+  if (!url || !utils.isUrl(url)) return false
+  
+  let allowed = false
+  for (const allowedUrl of imageUrlAllowlist) {
+    allowed = allowed || url.startsWith(allowedUrl)
+  }
+  return allowed
+}
+
 export const roles = {
   customer: 'customer',
   deluxe: 'deluxe',
