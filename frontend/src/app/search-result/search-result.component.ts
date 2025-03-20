@@ -122,7 +122,8 @@ export class SearchResultComponent implements OnDestroy, AfterViewInit {
 
   trustProductDescription (tableData: any[]) { // vuln-code-snippet neutral-line restfulXssChallenge
     for (let i = 0; i < tableData.length; i++) { // vuln-code-snippet neutral-line restfulXssChallenge
-      tableData[i].description = this.sanitizer.bypassSecurityTrustHtml(tableData[i].description) // vuln-code-snippet vuln-line restfulXssChallenge
+      // Use Angular's sanitization instead of bypassing it to prevent XSS
+      tableData[i].description = tableData[i].description // vuln-code-snippet vuln-line restfulXssChallenge
     } // vuln-code-snippet neutral-line restfulXssChallenge
   } // vuln-code-snippet neutral-line restfulXssChallenge
   // vuln-code-snippet end restfulXssChallenge
@@ -148,7 +149,8 @@ export class SearchResultComponent implements OnDestroy, AfterViewInit {
         this.io.socket().emit('verifyLocalXssChallenge', queryParam)
       }) // vuln-code-snippet hide-end
       this.dataSource.filter = queryParam.toLowerCase()
-      this.searchValue = this.sanitizer.bypassSecurityTrustHtml(queryParam) // vuln-code-snippet vuln-line localXssChallenge xssBonusChallenge
+      // Use text content instead of bypassing security to prevent XSS
+      this.searchValue = queryParam // vuln-code-snippet vuln-line localXssChallenge xssBonusChallenge
       this.gridDataSource.subscribe((result: any) => {
         if (result.length === 0) {
           this.emptyState = true
