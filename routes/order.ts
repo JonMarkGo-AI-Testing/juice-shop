@@ -153,8 +153,8 @@ module.exports = function placeOrder () {
 
           db.ordersCollection.insert({
             promotionalAmount: discountAmount,
-            paymentId: req.body.orderDetails ? req.body.orderDetails.paymentId : null,
-            addressId: req.body.orderDetails ? req.body.orderDetails.addressId : null,
+            paymentId: req.body.orderDetails ? security.sanitizeHtml(req.body.orderDetails.paymentId) : null,
+            addressId: req.body.orderDetails ? security.sanitizeHtml(req.body.orderDetails.addressId) : null,
             orderId,
             delivered: false,
             email: (email ? email.replace(/[aeiou]/gi, '*') : undefined),
