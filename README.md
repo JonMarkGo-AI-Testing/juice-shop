@@ -244,3 +244,6 @@ OWASP Juice Shop and any contributions are Copyright © by Bjoern Kimminich & th
 2014-2024.
 
 ![Juice Shop Logo](https://raw.githubusercontent.com/bkimminich/juice-shop/master/frontend/src/assets/public/images/JuiceShop_Logo_400px.png)
+
+## Development Notes
+You need to generate 'encryptionkeys/jwt.key' for local development. See the CONTRIBUTING.md file for more information.
