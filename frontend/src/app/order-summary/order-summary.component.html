@@ -40,19 +40,19 @@
       <div class="order-summary" translate>ORDER_SUMMARY</div>
       <table class="mat-table">
         <tr class="mat-row">
-          <td class="mat-cell label" translate>ITEMS</td>
-          <td class="mat-cell price">{{ itemTotal?.toFixed(2) }}&curren;</td>
+          <th class="mat-cell label" translate>ITEMS</th>
+          <th class="mat-cell price">{{ itemTotal?.toFixed(2) }}&curren;</th>
         </tr>
         <tr class="mat-row">
-          <td class="mat-cell label" translate>DELIVERY</td>
+          <th class="mat-cell label" translate>DELIVERY</th>
           <td class="mat-cell price">{{ deliveryPrice.toFixed(2) }}&curren;</td>
         </tr>
         <tr class="mat-row">
-          <td class="mat-cell label" translate>PROMOTION</td>
+          <th class="mat-cell label" translate>PROMOTION</th>
           <td class="mat-cell price">{{ promotionalDiscount.toFixed(2) }}&curren;</td>
         </tr>
         <tr class="mat-row">
-          <td class="mat-footer-cell label" translate>LABEL_TOTAL_PRICE</td>
+          <th class="mat-footer-cell label" translate>LABEL_TOTAL_PRICE</th>
           <td class="mat-footer-cell price">{{ (itemTotal + deliveryPrice - promotionalDiscount)?.toFixed(2)
             }}&curren;
           </td>
