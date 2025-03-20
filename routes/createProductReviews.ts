@@ -16,10 +16,21 @@ module.exports = function productReviews () {
   return (req: Request, res: Response) => {
     const user = security.authenticatedUsers.from(req)
     challengeUtils.solveIf(challenges.forgedReviewChallenge, () => { return user && user.data.email !== req.body.author })
+    
+    // Validate and sanitize inputs
+    const sanitizedId = req.params.id
+    const sanitizedMessage = req.body.message
+    const sanitizedAuthor = req.body.author
+    
+    // Ensure inputs exist and are of correct type
+    if (sanitizedId === undefined || sanitizedMessage === undefined || sanitizedAuthor === undefined) {
+      return res.status(400).json({ status: 'error', message: 'Missing required fields' })
+    }
+    
     reviewsCollection.insert({
-      product: req.params.id,
-      message: req.body.message,
-      author: req.body.author,
+      product: sanitizedId,
+      message: sanitizedMessage,
+      author: sanitizedAuthor,
       likesCount: 0,
       likedBy: []
     }).then(() => {
