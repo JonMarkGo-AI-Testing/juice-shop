@@ -4,7 +4,6 @@ import type { Product as ProductConfig } from 'lib/config.types'
 
 import path from 'path'
 import { promisify } from 'util'
-import { ExifImage } from 'exif'
 import sinonChai = require('sinon-chai')
 const expect = chai.expect
 chai.use(sinonChai)
@@ -14,6 +13,7 @@ const { pipeline } = require('stream')
 const fetch = require('node-fetch')
 
 async function parseExifData (path: string): Promise<any> {
+  const { ExifImage } = require('exif')
   return await new Promise((resolve, reject) => {
     // eslint-disable-next-line no-new
     new ExifImage({ image: path }, (error: Error | null, exifData: any) => {
