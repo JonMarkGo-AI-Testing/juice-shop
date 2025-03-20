@@ -1,11 +1,13 @@
 import { type NextFunction, type Request, type Response } from 'express'
 import * as accuracy from '../lib/accuracy'
+import path from 'path'
 
 const challengeUtils = require('../lib/challengeUtils')
 const fs = require('fs')
 const yaml = require('js-yaml')
 
 const FixesDir = 'data/static/codefixes'
+const FIXES_BASE_DIR = path.resolve(FixesDir)
 
 interface codeFix {
   fixes: string[]
@@ -76,10 +78,15 @@ export const checkCorrectFix = () => async (req: Request<Record<string, unknown>
     })
   } else {
     let explanation
-    if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
-      const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
-      const selectedFixInfo = codingChallengeInfos?.fixes.find(({ id }: { id: number }) => id === selectedFix + 1)
-      if (selectedFixInfo?.explanation) explanation = res.__(selectedFixInfo.explanation)
+    // Validate key to prevent path traversal
+    if (key && key.match(/^[a-z0-9_-]+$/i)) {
+      const infoFile = path.resolve(FIXES_BASE_DIR, `${key}.info.yml`)
+      // Ensure the path stays within the intended directory
+      if (infoFile.startsWith(FIXES_BASE_DIR) && fs.existsSync(infoFile)) {
+        const codingChallengeInfos = yaml.load(fs.readFileSync(infoFile, 'utf8'))
+        const selectedFixInfo = codingChallengeInfos?.fixes.find(({ id }: { id: number }) => id === selectedFix + 1)
+        if (selectedFixInfo?.explanation) explanation = res.__(selectedFixInfo.explanation)
+      }
     }
     if (selectedFix === fixData.correct) {
       await challengeUtils.solveFixIt(key)
