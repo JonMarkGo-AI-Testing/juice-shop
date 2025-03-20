@@ -3,7 +3,17 @@ import * as accuracy from '../lib/accuracy'
 
 const challengeUtils = require('../lib/challengeUtils')
 const fs = require('fs')
+const path = require('path')
 const yaml = require('js-yaml')
+
+// Safe path join function to prevent path traversal attacks
+const safePathJoin = (basePath: string, fileName: string): string => {
+  // Sanitize the file name by removing any character that could be used for path traversal
+  const sanitizedFileName = fileName.replace(/[^\w.-]/g, '');
+  
+  // Return a safely joined path
+  return path.join(basePath, sanitizedFileName);
+}
 
 const FixesDir = 'data/static/codefixes'
 
@@ -25,7 +35,7 @@ export const readFixes = (key: string) => {
   let correct: number = -1
   for (const file of files) {
     if (file.startsWith(`${key}_`)) {
-      const fix = fs.readFileSync(`${FixesDir}/${file}`).toString()
+      const fix = fs.readFileSync(safePathJoin(FixesDir, file)).toString()
       const metadata = file.split('_')
       const number = metadata[1]
       fixes.push(fix)
@@ -76,8 +86,8 @@ export const checkCorrectFix = () => async (req: Request<Record<string, unknown>
     })
   } else {
     let explanation
-    if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
-      const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
+    if (fs.existsSync(safePathJoin('./data/static/codefixes', key + '.info.yml'))) {
+      const codingChallengeInfos = yaml.load(fs.readFileSync(safePathJoin('./data/static/codefixes', key + '.info.yml'), 'utf8'))
       const selectedFixInfo = codingChallengeInfos?.fixes.find(({ id }: { id: number }) => id === selectedFix + 1)
       if (selectedFixInfo?.explanation) explanation = res.__(selectedFixInfo.explanation)
     }

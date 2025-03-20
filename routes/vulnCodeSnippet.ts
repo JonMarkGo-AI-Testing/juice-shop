@@ -5,12 +5,22 @@
 
 import { type NextFunction, type Request, type Response } from 'express'
 import fs from 'fs'
+import path from 'path'
 import yaml from 'js-yaml'
 import { getCodeChallenges } from '../lib/codingChallenges'
 import * as accuracy from '../lib/accuracy'
 import * as utils from '../lib/utils'
 
 const challengeUtils = require('../lib/challengeUtils')
+
+// Safe path join function to prevent path traversal attacks
+const safePathJoin = (basePath: string, fileName: string): string => {
+  // Sanitize the file name by removing any character that could be used for path traversal
+  const sanitizedFileName = fileName.replace(/[^\w.-]/g, '');
+  
+  // Return a safely joined path
+  return path.join(basePath, sanitizedFileName);
+}
 
 interface SnippetRequestBody {
   challenge: string
@@ -90,8 +100,8 @@ exports.checkVulnLines = () => async (req: Request<Record<string, unknown>, Reco
   const selectedLines: number[] = req.body.selectedLines
   const verdict = getVerdict(vulnLines, neutralLines, selectedLines)
   let hint
-  if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
-    const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
+  if (fs.existsSync(safePathJoin('./data/static/codefixes', key + '.info.yml'))) {
+    const codingChallengeInfos = yaml.load(fs.readFileSync(safePathJoin('./data/static/codefixes', key + '.info.yml'), 'utf8'))
     if (codingChallengeInfos?.hints) {
       if (accuracy.getFindItAttempts(key) > codingChallengeInfos.hints.length) {
         if (vulnLines.length === 1) {
