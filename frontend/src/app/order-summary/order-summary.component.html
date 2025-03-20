@@ -39,24 +39,32 @@
     <mat-card class="mat-elevation-z0">
       <div class="order-summary" translate>ORDER_SUMMARY</div>
       <table class="mat-table">
-        <tr class="mat-row">
-          <td class="mat-cell label" translate>ITEMS</td>
-          <td class="mat-cell price">{{ itemTotal?.toFixed(2) }}&curren;</td>
-        </tr>
-        <tr class="mat-row">
-          <td class="mat-cell label" translate>DELIVERY</td>
-          <td class="mat-cell price">{{ deliveryPrice.toFixed(2) }}&curren;</td>
-        </tr>
-        <tr class="mat-row">
-          <td class="mat-cell label" translate>PROMOTION</td>
-          <td class="mat-cell price">{{ promotionalDiscount.toFixed(2) }}&curren;</td>
-        </tr>
-        <tr class="mat-row">
-          <td class="mat-footer-cell label" translate>LABEL_TOTAL_PRICE</td>
-          <td class="mat-footer-cell price">{{ (itemTotal + deliveryPrice - promotionalDiscount)?.toFixed(2)
-            }}&curren;
-          </td>
-        </tr>
+        <thead>
+          <tr class="mat-header-row">
+            <th class="mat-header-cell label" translate>ITEM</th>
+            <th class="mat-header-cell price" translate>PRICE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="mat-row">
+            <td class="mat-cell label" translate>ITEMS</td>
+            <td class="mat-cell price">{{ itemTotal?.toFixed(2) }}&curren;</td>
+          </tr>
+          <tr class="mat-row">
+            <td class="mat-cell label" translate>DELIVERY</td>
+            <td class="mat-cell price">{{ deliveryPrice.toFixed(2) }}&curren;</td>
+          </tr>
+          <tr class="mat-row">
+            <td class="mat-cell label" translate>PROMOTION</td>
+            <td class="mat-cell price">{{ promotionalDiscount.toFixed(2) }}&curren;</td>
+          </tr>
+          <tr class="mat-row">
+            <td class="mat-footer-cell label" translate>LABEL_TOTAL_PRICE</td>
+            <td class="mat-footer-cell price">{{ (itemTotal + deliveryPrice - promotionalDiscount)?.toFixed(2)
+              }}&curren;
+            </td>
+          </tr>
+        </tbody>
       </table>
       <button mat-raised-button mat-button class="btn btn-pay" color="primary" aria-label="Complete your purchase"
               id="checkoutButton" (click)="placeOrder()">
