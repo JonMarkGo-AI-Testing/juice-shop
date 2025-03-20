@@ -11,10 +11,22 @@ import { challenges } from '../data/datacache'
 
 const security = require('../lib/insecurity')
 
+// Validates that the ID parameter is a string to prevent NoSQL injection
+function validateId (id: any): boolean {
+  return id !== undefined && typeof id === 'string'
+}
+
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.body.id
     const user = security.authenticatedUsers.from(req)
+    
+    // Validate ID parameter before using in database query
+    if (!validateId(id)) {
+      res.status(400).json({ error: 'Invalid review ID' })
+      return
+    }
+    
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
         res.status(404).json({ error: 'Not found' })
