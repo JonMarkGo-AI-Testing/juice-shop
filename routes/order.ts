@@ -151,10 +151,16 @@ module.exports = function placeOrder () {
             })
           }
 
+          // Validate and sanitize user-controlled data
+          const safePaymentId = req.body.orderDetails && req.body.orderDetails.paymentId ? 
+              String(req.body.orderDetails.paymentId).replace(/[^a-zA-Z0-9_-]/g, '') : null;
+          const safeAddressId = req.body.orderDetails && req.body.orderDetails.addressId ? 
+              String(req.body.orderDetails.addressId).replace(/[^a-zA-Z0-9_-]/g, '') : null;
+              
           db.ordersCollection.insert({
             promotionalAmount: discountAmount,
-            paymentId: req.body.orderDetails ? req.body.orderDetails.paymentId : null,
-            addressId: req.body.orderDetails ? req.body.orderDetails.addressId : null,
+            paymentId: safePaymentId,
+            addressId: safeAddressId,
             orderId,
             delivered: false,
             email: (email ? email.replace(/[aeiou]/gi, '*') : undefined),
