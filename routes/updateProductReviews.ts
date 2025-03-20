@@ -14,10 +14,15 @@ const security = require('../lib/insecurity')
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = security.authenticatedUsers.from(req) // vuln-code-snippet vuln-line forgedReviewChallenge
+    // Fix: Use proper query parameters to prevent NoSQL injection
+    const query = { _id: String(req.body.id) }; // Explicitly convert to string
+    const update = { $set: { message: req.body.message } };
+    const options = { multi: false }; // Prevent multi-document update unless necessary
+    
     db.reviewsCollection.update( // vuln-code-snippet neutral-line forgedReviewChallenge
-      { _id: req.body.id }, // vuln-code-snippet vuln-line noSqlReviewsChallenge forgedReviewChallenge
-      { $set: { message: req.body.message } },
-      { multi: true } // vuln-code-snippet vuln-line noSqlReviewsChallenge
+      query,
+      update,
+      options // Changed from multi: true to prevent NoSQL injection
     ).then(
       (result: { modified: number, original: Array<{ author: any }> }) => {
         challengeUtils.solveIf(challenges.noSqlReviewsChallenge, () => { return result.modified > 1 }) // vuln-code-snippet hide-line
