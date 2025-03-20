@@ -11,9 +11,20 @@ import { challenges } from '../data/datacache'
 
 const security = require('../lib/insecurity')
 
+// Function to validate MongoDB ObjectId format
+function isValidMongoId(id: string): boolean {
+  // MongoDB ObjectId is a 24-character hexadecimal string
+  return /^[0-9a-fA-F]{24}$/.test(id);
+}
+
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.body.id
+    // Validate ID before using it in database queries
+    if (!id || typeof id !== 'string' || !isValidMongoId(id)) {
+      return res.status(400).json({ error: 'Invalid review ID format' });
+    }
+    
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
