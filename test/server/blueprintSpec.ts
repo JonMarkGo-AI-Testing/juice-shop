@@ -4,6 +4,7 @@ import type { Product as ProductConfig } from 'lib/config.types'
 
 import path from 'path'
 import { promisify } from 'util'
+// ExifImage is used directly in parseExifData function
 import { ExifImage } from 'exif'
 import sinonChai = require('sinon-chai')
 const expect = chai.expect
