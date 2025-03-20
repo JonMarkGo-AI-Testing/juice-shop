@@ -58,6 +58,9 @@
              </mat-cell>
              <mat-footer-cell *matFooterCellDef>
                 <table class="mat-table">
+                   <tr class="mat-header-row">
+                      <th translate>LABEL_DESCRIPTION</th>
+                   </tr>
                    <tr class="mat-row">
                       <td translate>ITEMS</td>
                    </tr>
@@ -78,6 +81,9 @@
              <mat-cell *matCellDef="let element" class="price-align">{{ (element.total).toFixed(2) }}&curren;</mat-cell>
              <mat-footer-cell *matFooterCellDef>
                 <table class="price-align">
+                   <tr class="mat-header-row">
+                      <th translate>LABEL_AMOUNT</th>
+                   </tr>
                    <tr class="mat-row">
                       <td>{{ orderDetails.itemTotal?.toFixed(2) }}&curren;</td>
                    </tr>
