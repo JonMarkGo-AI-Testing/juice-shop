@@ -39,6 +39,10 @@
     <mat-card class="mat-elevation-z0">
       <div class="order-summary" translate>ORDER_SUMMARY</div>
       <table class="mat-table">
+        <tr class="mat-header-row">
+          <th class="mat-header-cell label" translate>ITEM</th>
+          <th class="mat-header-cell price" translate>PRICE</th>
+        </tr>
         <tr class="mat-row">
           <td class="mat-cell label" translate>ITEMS</td>
           <td class="mat-cell price">{{ itemTotal?.toFixed(2) }}&curren;</td>
