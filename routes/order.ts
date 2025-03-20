@@ -151,10 +151,14 @@ module.exports = function placeOrder () {
             })
           }
 
+          // Sanitize user inputs before insertion into the database
+          const sanitizedPaymentId = req.body.orderDetails?.paymentId ? String(req.body.orderDetails.paymentId).replace(/[^\w-]+/g, '') : null;
+          const sanitizedAddressId = req.body.orderDetails?.addressId ? String(req.body.orderDetails.addressId).replace(/[^\w-]+/g, '') : null;
+          
           db.ordersCollection.insert({
             promotionalAmount: discountAmount,
-            paymentId: req.body.orderDetails ? req.body.orderDetails.paymentId : null,
-            addressId: req.body.orderDetails ? req.body.orderDetails.addressId : null,
+            paymentId: sanitizedPaymentId,
+            addressId: sanitizedAddressId,
             orderId,
             delivered: false,
             email: (email ? email.replace(/[aeiou]/gi, '*') : undefined),
