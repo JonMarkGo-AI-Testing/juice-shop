@@ -4,6 +4,7 @@ import * as accuracy from '../lib/accuracy'
 const challengeUtils = require('../lib/challengeUtils')
 const fs = require('fs')
 const yaml = require('js-yaml')
+const security = require('../lib/insecurity')
 
 const FixesDir = 'data/static/codefixes'
 
@@ -76,8 +77,9 @@ export const checkCorrectFix = () => async (req: Request<Record<string, unknown>
     })
   } else {
     let explanation
-    if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
-      const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
+    const sanitizedKey = security.sanitizeFilename(key)
+    if (fs.existsSync('./data/static/codefixes/' + sanitizedKey + '.info.yml')) {
+      const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + sanitizedKey + '.info.yml', 'utf8'))
       const selectedFixInfo = codingChallengeInfos?.fixes.find(({ id }: { id: number }) => id === selectedFix + 1)
       if (selectedFixInfo?.explanation) explanation = res.__(selectedFixInfo.explanation)
     }
