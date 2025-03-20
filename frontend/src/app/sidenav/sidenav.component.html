@@ -44,7 +44,7 @@
       </span>
     </a>
 
-    <mat-list-item *ngIf="isLoggedIn()" (click)="showOrdersSubmenu = !showOrdersSubmenu" class="parent"
+    <mat-list-item *ngIf="isLoggedIn()" (click)="showOrdersSubmenu = !showOrdersSubmenu" onKeyDown="showOrdersSubmenu = !showOrdersSubmenu" class="parent"
                    aria-label="Show Orders and Payment Menu">
       <mat-icon>
         check_circle_outline
@@ -233,7 +233,7 @@
 
   <mat-divider *ngIf="scoreBoardVisible || showGitHubLink" style="margin-bottom: 10px;"></mat-divider>
 
-  <a *ngIf="scoreBoardVisible" mat-list-item routerLink="/score-board" (click)="onToggleSidenav()"
+  <a *ngIf="scoreBoardVisible" mat-list-item routerLink="/score-board" (click)="onToggleSidenav()" onKeyDown="onToggleSidenav()"
      aria-label="Open score-board">
     <mat-icon matListIcon class="fas fa-trophy fa-lg"></mat-icon>
     <span class="menu-text truncate">
