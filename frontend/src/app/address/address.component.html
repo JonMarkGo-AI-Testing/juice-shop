@@ -44,7 +44,7 @@
 
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
     <mat-row *matRowDef="let row; columns: displayedColumns; let element"
-             (click)="selection.toggle(row); emitSelectionToParent(element.id)"></mat-row>
+             (click)="selection.toggle(row); emitSelectionToParent(element.id)" onKeyDown=""></mat-row>
 
   </mat-table>
   <div style="margin-top: 20px;" *ngIf="addNewAddressDiv">
