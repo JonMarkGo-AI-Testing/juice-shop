@@ -151,18 +151,24 @@ module.exports = function placeOrder () {
             })
           }
 
+          // Sanitize inputs to prevent NoSQL injection
+          const sanitizedPaymentId = req.body.orderDetails?.paymentId ? String(req.body.orderDetails.paymentId) : null
+          const sanitizedAddressId = req.body.orderDetails?.addressId ? String(req.body.orderDetails.addressId) : null
+          const sanitizedEmail = email ? email.replace(/[aeiou]/gi, '*') : undefined
+          const sanitizedEta = deliveryMethod.eta.toString()
+
           db.ordersCollection.insert({
             promotionalAmount: discountAmount,
-            paymentId: req.body.orderDetails ? req.body.orderDetails.paymentId : null,
-            addressId: req.body.orderDetails ? req.body.orderDetails.addressId : null,
+            paymentId: sanitizedPaymentId,
+            addressId: sanitizedAddressId,
             orderId,
             delivered: false,
-            email: (email ? email.replace(/[aeiou]/gi, '*') : undefined),
+            email: sanitizedEmail,
             totalPrice,
             products: basketProducts,
             bonus: totalPoints,
             deliveryPrice: deliveryAmount,
-            eta: deliveryMethod.eta.toString()
+            eta: sanitizedEta
           }).then(() => {
             doc.end()
           })
