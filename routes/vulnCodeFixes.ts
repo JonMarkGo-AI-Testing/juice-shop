@@ -1,5 +1,6 @@
 import { type NextFunction, type Request, type Response } from 'express'
 import * as accuracy from '../lib/accuracy'
+import path from 'path'
 
 const challengeUtils = require('../lib/challengeUtils')
 const fs = require('fs')
@@ -76,10 +77,14 @@ export const checkCorrectFix = () => async (req: Request<Record<string, unknown>
     })
   } else {
     let explanation
-    if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
-      const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
-      const selectedFixInfo = codingChallengeInfos?.fixes.find(({ id }: { id: number }) => id === selectedFix + 1)
-      if (selectedFixInfo?.explanation) explanation = res.__(selectedFixInfo.explanation)
+    // Validate the key does not contain path traversal characters
+    if (key && !key.includes('/') && !key.includes('\\') && !key.includes('..')) {
+      const infoFile = path.resolve('data/static/codefixes', key + '.info.yml')
+      if (fs.existsSync(infoFile)) {
+        const codingChallengeInfos = yaml.load(fs.readFileSync(infoFile, 'utf8'))
+        const selectedFixInfo = codingChallengeInfos?.fixes.find(({ id }: { id: number }) => id === selectedFix + 1)
+        if (selectedFixInfo?.explanation) explanation = res.__(selectedFixInfo.explanation)
+      }
     }
     if (selectedFix === fixData.correct) {
       await challengeUtils.solveFixIt(key)
