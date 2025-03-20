@@ -11,7 +11,7 @@
       <mat-header-cell *matHeaderCellDef fxFlex="20%"></mat-header-cell>
       <mat-cell *matCellDef="let element; let row" fxFlex="20%">
         <mat-radio-button (click)="emitSelectionToParent(element.id)" [checked]="selection.isSelected(row)"
-                          (change)="$event ? selection.toggle(row) : null"></mat-radio-button>
+                          (change)="$event ? selection.toggle(row) : null" (keyDown)="$event ? selection.toggle(row) : null"></mat-radio-button>
       </mat-cell>
     </ng-container>
     <ng-container matColumnDef="Name">
