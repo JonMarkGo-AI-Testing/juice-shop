@@ -15,6 +15,10 @@ module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.body.id
     const user = security.authenticatedUsers.from(req)
+    if (typeof id !== 'string') {
+      res.status(400).json({ error: 'Wrong Params' })
+      return
+    }
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
         res.status(404).json({ error: 'Not found' })
@@ -28,6 +32,7 @@ module.exports = function productReviews () {
             () => {
               // Artificial wait for timing attack challenge
               setTimeout(function () {
+                // id is already validated above
                 db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
                   const likedBy = review.likedBy
                   likedBy.push(user.data.email)
