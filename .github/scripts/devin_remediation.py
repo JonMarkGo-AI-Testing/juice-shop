@@ -61,8 +61,8 @@ async def get_sonarcloud_issues():
         log(f"Unexpected error when retrieving SonarCloud issues: {str(e)}", "ERROR")
         return []
 
-async def delegate_task_to_devin(issue):
-    """Delegate the task of fixing, committing, and pushing to Devin AI."""
+async def delegate_tasks_to_devin(issues):
+    """Delegate the task of fixing multiple issues to Devin AI in a single session."""
     if not DEVIN_API_KEY:
         log("DEVIN_API_KEY environment variable is not set", "ERROR")
         return None
@@ -73,22 +73,42 @@ async def delegate_task_to_devin(issue):
             
             # Add timestamp to make branch name unique
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            branch_name = f"devin/fix-{timestamp}-{issue['key']}"
+            branch_name = f"devin/fix-batch-{timestamp}"
             
+            # Create a comprehensive prompt with all issues
             prompt = f"""
-            Fix the following vulnerability in {GITHUB_REPOSITORY}: {issue['message']} in file {issue['component']}.
-            1. Create a new branch named '{branch_name}'.
+            Fix the following vulnerabilities in {GITHUB_REPOSITORY}:
+            
+            """
+            
+            # Add each issue to the prompt
+            for i, issue in enumerate(issues, 1):
+                prompt += f"""
+                Issue {i}:
+                - Key: {issue['key']}
+                - Message: {issue['message']}
+                - Component: {issue['component']}
+                - Severity: {issue['severity']}
+                - Type: {issue['type']}
+                
+                """
+            
+            prompt += f"""
+            For each issue:
+            1. Create a separate branch for each fix using the pattern 'devin/fix-{timestamp}-[issue-key]'.
             2. Implement the fix.
             3. Write a detailed commit message explaining the changes:
-                - Issue Key: {issue['key']}
-                - Component: {issue['component']}
+                - Issue Key: [issue-key]
+                - Component: [component]
                 - Fixed by Devin AI at {datetime.now().isoformat()}
                 - Include 'Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>'.
             4. Push the branch to the remote repository.
             5. Open a pull request with a description of the fix.
+            
+            Process each issue independently, creating a separate PR for each fix.
             """
             
-            log(f"Creating Devin session with branch: {branch_name}")
+            log(f"Creating Devin session to handle {len(issues)} issues")
             data = {
                 "prompt": prompt, 
                 "idempotent": True,
@@ -101,7 +121,7 @@ async def delegate_task_to_devin(issue):
             
             async with session.post(f"{DEVIN_API_BASE}/sessions", json=data, headers=headers) as response:
                 if response.status != 200:
-                    log(f"Error delegating task to Devin: {await response.text()}", "ERROR")
+                    log(f"Error delegating tasks to Devin: {await response.text()}", "ERROR")
                     return None
                     
                 result = await response.json()
@@ -333,44 +353,28 @@ async def main():
             log("No issues found. Exiting.")
             return
         
-        # Track successful sessions
-        successful_sessions = []
+        # Delegate all tasks to Devin in a single session
+        session_data = await delegate_tasks_to_devin(issues)
         
-        # Process each issue with Devin
-        for issue in issues:
-            log(f"Processing issue: {issue['key']}")
-            
-            # Delegate task to Devin AI
-            session_data = await delegate_task_to_devin(issue)
-            
-            if session_data:
-                session_id = session_data.get("session_id")
-                if session_id:
-                    log(f"Monitoring session: {session_id}")
-                    
-                    # Monitor Devin's progress
-                    result = await monitor_devin_session(session_id)
-                    
-                    if result and result.get("status") == "completed":
-                        successful_sessions.append(session_id)
-                    else:
-                        log("Devin session did not complete successfully. Trying direct PR creation...", "WARNING")
-                        
-                        # Try to create PR directly if Devin fails
-                        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                        branch_name = f"devin/fix-{timestamp}-{issue['key']}"
-                        await create_pr_directly(issue, branch_name)
+        if session_data:
+            session_id = session_data.get("session_id")
+            if session_id:
+                log(f"Monitoring session: {session_id}")
+                
+                # Monitor Devin's progress
+                result = await monitor_devin_session(session_id)
+                
+                if result and result.get("status") == "completed":
+                    log("Devin successfully completed the batch remediation task")
                 else:
-                    log("No session ID returned from Devin API", "ERROR")
+                    log("Devin session did not complete successfully. Creating fallback PR...", "WARNING")
+                    await create_fallback_pr(issues)
             else:
-                log("Failed to create Devin session", "ERROR")
-        
-        # Create fallback PR if no successful sessions
-        if not successful_sessions:
-            log("No successful Devin sessions. Creating fallback PR...", "WARNING")
-            await create_fallback_pr(issues)
+                log("No session ID returned from Devin API", "ERROR")
+                await create_fallback_pr(issues)
         else:
-            log(f"Successfully completed {len(successful_sessions)} Devin sessions")
+            log("Failed to create Devin session", "ERROR")
+            await create_fallback_pr(issues)
                 
     except Exception as e:
         log(f"Error occurred: {str(e)}", "ERROR")
