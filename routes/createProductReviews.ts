@@ -16,10 +16,16 @@ module.exports = function productReviews () {
   return (req: Request, res: Response) => {
     const user = security.authenticatedUsers.from(req)
     challengeUtils.solveIf(challenges.forgedReviewChallenge, () => { return user && user.data.email !== req.body.author })
+    
+    // Sanitize user inputs before using in database operations
+    const productId = req.params.id ? Number(req.params.id) : req.params.id 
+    const sanitizedMessage = security.sanitizeHtml(req.body.message || '')
+    const sanitizedAuthor = security.sanitizeHtml(req.body.author || '')
+    
     reviewsCollection.insert({
-      product: req.params.id,
-      message: req.body.message,
-      author: req.body.author,
+      product: productId,
+      message: sanitizedMessage,
+      author: sanitizedAuthor,
       likesCount: 0,
       likedBy: []
     }).then(() => {
