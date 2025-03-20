@@ -63,4 +63,4 @@ config/*.yml
 !config/oss.yml
 
 # System Files
-.DS_Store
+.DS_Storeencryptionkeys/jwt.key
