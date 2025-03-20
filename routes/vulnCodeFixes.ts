@@ -1,5 +1,6 @@
 import { type NextFunction, type Request, type Response } from 'express'
 import * as accuracy from '../lib/accuracy'
+import path from 'path'
 
 const challengeUtils = require('../lib/challengeUtils')
 const fs = require('fs')
@@ -76,8 +77,17 @@ export const checkCorrectFix = () => async (req: Request<Record<string, unknown>
     })
   } else {
     let explanation
-    if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
-      const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
+    // Validate key to prevent path traversal
+    if (key.includes('/') || key.includes('..')) {
+      res.status(403).json({
+        error: 'Invalid key parameter!'
+      })
+      return
+    }
+    
+    const infoFilePath = path.resolve('data/static/codefixes', key + '.info.yml')
+    if (fs.existsSync(infoFilePath)) {
+      const codingChallengeInfos = yaml.load(fs.readFileSync(infoFilePath, 'utf8'))
       const selectedFixInfo = codingChallengeInfos?.fixes.find(({ id }: { id: number }) => id === selectedFix + 1)
       if (selectedFixInfo?.explanation) explanation = res.__(selectedFixInfo.explanation)
     }
