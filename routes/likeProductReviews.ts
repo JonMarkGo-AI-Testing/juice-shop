@@ -15,6 +15,11 @@ module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.body.id
     const user = security.authenticatedUsers.from(req)
+    // Validate id to prevent NoSQL injection
+    if (typeof id !== 'string' || !id.match(/^[a-f0-9]{24}$/)) {
+      res.status(400).json({ error: 'Invalid review ID format' })
+      return
+    }
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
         res.status(404).json({ error: 'Not found' })
