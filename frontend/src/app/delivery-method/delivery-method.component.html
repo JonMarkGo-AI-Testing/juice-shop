@@ -38,7 +38,8 @@
       </ng-container>
       <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
       <mat-row *matRowDef="let row; columns: displayedColumns; let element"
-               (click)="selection.toggle(row); selectMethod(element.id)"></mat-row>
+               (click)="selection.toggle(row); selectMethod(element.id)"
+               (keyDown)="selection.toggle(row); selectMethod(element.id)"></mat-row>
     </mat-table>
   </div>
   <div style="margin-top: 20px;">
