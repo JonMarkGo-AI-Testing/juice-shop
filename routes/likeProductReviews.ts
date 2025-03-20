@@ -14,6 +14,13 @@ const security = require('../lib/insecurity')
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.body.id
+    
+    // Ensure id is present and valid - early validation
+    if (!id) {
+      res.status(400).json({ error: 'Missing id parameter' })
+      return
+    }
+    
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
