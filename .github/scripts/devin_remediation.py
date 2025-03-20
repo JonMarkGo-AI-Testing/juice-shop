@@ -11,7 +11,7 @@ from datetime import datetime
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
 DEVIN_API_KEY = os.getenv("DEVIN_API_KEY")
-DEVIN_API_BASE = "https://api.cognition-labs.com/v1"
+DEVIN_API_BASE = "https://api.devin.ai/v1"
 SONAR_TOKEN = os.getenv("SONAR_TOKEN")
 SONAR_ORG = os.getenv("SONAR_ORG")
 SONAR_PROJECT_KEY = os.getenv("SONAR_PROJECT_KEY")
@@ -89,7 +89,15 @@ async def delegate_task_to_devin(issue):
             """
             
             log(f"Creating Devin session with branch: {branch_name}")
-            data = {"prompt": prompt, "idempotent": True}
+            data = {
+                "prompt": prompt, 
+                "idempotent": True,
+                # Uncomment and set these optional parameters as needed
+                # "snapshot_id": None,  # ID of a machine snapshot to use
+                # "playbook_id": None,  # ID of a playbook to follow
+                # "unlisted": True,     # Whether the session should be unlisted
+                # "max_acu_limit": 100  # Maximum ACU limit for the session
+            }
             
             async with session.post(f"{DEVIN_API_BASE}/sessions", json=data, headers=headers) as response:
                 if response.status != 200:
