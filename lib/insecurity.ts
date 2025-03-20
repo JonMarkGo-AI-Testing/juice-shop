@@ -132,6 +132,13 @@ export const redirectAllowlist = new Set([
   'http://leanpub.com/juice-shop'
 ])
 
+export const imageUrlAllowlist = new Set([
+  'https://www.gravatar.com',
+  'https://placekitten.com',
+  'https://placedog.net',
+  'https://picsum.photos'
+])
+
 export const isRedirectAllowed = (url: string) => {
   let allowed = false
   for (const allowedUrl of redirectAllowlist) {
@@ -140,6 +147,15 @@ export const isRedirectAllowed = (url: string) => {
   return allowed
 }
 // vuln-code-snippet end redirectCryptoCurrencyChallenge redirectChallenge
+
+export const isImageUrlAllowed = (url: string) => {
+  if (!url || !utils.isUrl(url)) return false
+  let allowed = false
+  for (const allowedUrl of imageUrlAllowlist) {
+    allowed = allowed || utils.startsWith(url, allowedUrl)
+  }
+  return allowed
+}
 
 export const roles = {
   customer: 'customer',
