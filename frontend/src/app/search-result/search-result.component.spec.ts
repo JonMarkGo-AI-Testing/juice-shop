@@ -23,7 +23,7 @@ import { DomSanitizer } from '@angular/platform-browser'
 import { throwError } from 'rxjs/internal/observable/throwError'
 import { ProductDetailsComponent } from 'src/app/product-details/product-details.component'
 import { BasketService } from '../Services/basket.service'
-import { EventEmitter } from '@angular/core'
+import { EventEmitter, SecurityContext } from '@angular/core'
 import { ActivatedRoute } from '@angular/router'
 import { SocketIoService } from '../Services/socket-io.service'
 import { type Product } from '../Models/product.model'
@@ -138,7 +138,7 @@ describe('SearchResultComponent', () => {
     productService.search.and.returnValue(of([{ description: '<script>alert("XSS")</script>' }]))
     component.ngAfterViewInit()
     fixture.detectChanges()
-    expect(sanitizer.bypassSecurityTrustHtml).toHaveBeenCalledWith('<script>alert("XSS")</script>')
+    expect(sanitizer.sanitize).toHaveBeenCalledWith(SecurityContext.HTML, '<script>alert("XSS")</script>')
   })
 
   it('should hold no products when product search API call fails', () => {
@@ -188,7 +188,7 @@ describe('SearchResultComponent', () => {
   it('should pass the search query as trusted HTML', () => {
     activatedRoute.setQueryParameter('<script>scripttag</script>')
     component.filterTable()
-    expect(sanitizer.bypassSecurityTrustHtml).toHaveBeenCalledWith('<script>scripttag</script>')
+    expect(sanitizer.sanitize).toHaveBeenCalledWith(SecurityContext.HTML, '<script>scripttag</script>')
   })
 
   it('should open a modal dialog with product details', () => {
