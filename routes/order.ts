@@ -151,10 +151,15 @@ module.exports = function placeOrder () {
             })
           }
 
+          const sanitizedPaymentId = req.body.orderDetails && req.body.orderDetails.paymentId ? 
+            security.sanitizeHtml(req.body.orderDetails.paymentId.toString()) : null;
+          const sanitizedAddressId = req.body.orderDetails && req.body.orderDetails.addressId ? 
+            security.sanitizeHtml(req.body.orderDetails.addressId.toString()) : null;
+
           db.ordersCollection.insert({
             promotionalAmount: discountAmount,
-            paymentId: req.body.orderDetails ? req.body.orderDetails.paymentId : null,
-            addressId: req.body.orderDetails ? req.body.orderDetails.addressId : null,
+            paymentId: sanitizedPaymentId,
+            addressId: sanitizedAddressId,
             orderId,
             delivered: false,
             email: (email ? email.replace(/[aeiou]/gi, '*') : undefined),
