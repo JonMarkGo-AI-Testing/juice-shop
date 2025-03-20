@@ -151,10 +151,15 @@ module.exports = function placeOrder () {
             })
           }
 
+          // Validate and sanitize user input
+          const paymentId = req.body.orderDetails?.paymentId ? String(req.body.orderDetails.paymentId).replace(/[^\w-]/g, '') : null
+          const addressId = req.body.orderDetails?.addressId ? String(req.body.orderDetails.addressId).replace(/[^\w-]/g, '') : null
+
+          // Use sanitized values for database operation
           db.ordersCollection.insert({
             promotionalAmount: discountAmount,
-            paymentId: req.body.orderDetails ? req.body.orderDetails.paymentId : null,
-            addressId: req.body.orderDetails ? req.body.orderDetails.addressId : null,
+            paymentId: paymentId,
+            addressId: addressId,
             orderId,
             delivered: false,
             email: (email ? email.replace(/[aeiou]/gi, '*') : undefined),
