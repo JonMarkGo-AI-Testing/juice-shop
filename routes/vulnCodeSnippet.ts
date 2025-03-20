@@ -6,9 +6,11 @@
 import { type NextFunction, type Request, type Response } from 'express'
 import fs from 'fs'
 import yaml from 'js-yaml'
+import path from 'path'
 import { getCodeChallenges } from '../lib/codingChallenges'
 import * as accuracy from '../lib/accuracy'
 import * as utils from '../lib/utils'
+import * as security from '../lib/insecurity'
 
 const challengeUtils = require('../lib/challengeUtils')
 
@@ -90,8 +92,10 @@ exports.checkVulnLines = () => async (req: Request<Record<string, unknown>, Reco
   const selectedLines: number[] = req.body.selectedLines
   const verdict = getVerdict(vulnLines, neutralLines, selectedLines)
   let hint
-  if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
-    const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
+  const sanitizedKey = security.sanitizeFilename(key)
+  const infoFilePath = path.join('data', 'static', 'codefixes', sanitizedKey + '.info.yml')
+  if (fs.existsSync(infoFilePath)) {
+    const codingChallengeInfos = yaml.load(fs.readFileSync(infoFilePath, 'utf8'))
     if (codingChallengeInfos?.hints) {
       if (accuracy.getFindItAttempts(key) > codingChallengeInfos.hints.length) {
         if (vulnLines.length === 1) {
