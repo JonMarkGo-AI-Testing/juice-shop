@@ -13,6 +13,12 @@ const security = require('../lib/insecurity')
 
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
+    // Validate that id is a string to prevent NoSQL injection
+    if (typeof req.body.id !== 'string') {
+      res.status(400).json({ error: 'Invalid review ID format' })
+      return
+    }
+    
     const id = req.body.id
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
