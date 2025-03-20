@@ -11,24 +11,35 @@ import { challenges } from '../data/datacache'
 
 const security = require('../lib/insecurity')
 
+// Sanitize input to prevent NoSQL injection
+function sanitize(input: string): string {
+  // Remove any characters that could be used for NoSQL injection
+  return input.toString().replace(/([^a-zA-Z0-9])/g, '\\$1')
+}
+
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.body.id
+    // Validate that the id is provided and is a string
+    if (!id || typeof id !== 'string') {
+      res.status(400).json({ error: 'Invalid review ID' })
+      return
+    }
     const user = security.authenticatedUsers.from(req)
-    db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
+    db.reviewsCollection.findOne({ _id: sanitize(id) }).then((review: Review) => {
       if (!review) {
         res.status(404).json({ error: 'Not found' })
       } else {
         const likedBy = review.likedBy
         if (!likedBy.includes(user.data.email)) {
           db.reviewsCollection.update(
-            { _id: id },
+            { _id: sanitize(id) },
             { $inc: { likesCount: 1 } }
           ).then(
             () => {
               // Artificial wait for timing attack challenge
               setTimeout(function () {
-                db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
+                db.reviewsCollection.findOne({ _id: sanitize(id) }).then((review: Review) => {
                   const likedBy = review.likedBy
                   likedBy.push(user.data.email)
                   let count = 0
@@ -39,7 +50,7 @@ module.exports = function productReviews () {
                   }
                   challengeUtils.solveIf(challenges.timingAttackChallenge, () => { return count > 2 })
                   db.reviewsCollection.update(
-                    { _id: id },
+                    { _id: sanitize(id) },
                     { $set: { likedBy } }
                   ).then(
                     (result: any) => {
