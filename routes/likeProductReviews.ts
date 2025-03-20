@@ -13,7 +13,16 @@ const security = require('../lib/insecurity')
 
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
-    const id = req.body.id
+    let id
+    try {
+      id = req.body.id
+      if (id === undefined || id === null) {
+        throw new Error('Missing required parameter')
+      }
+    } catch (error) {
+      res.status(400).json({ error: 'Wrong Params' })
+      return
+    }
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
