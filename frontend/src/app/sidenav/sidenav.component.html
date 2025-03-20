@@ -18,7 +18,7 @@
 
   <div fxHide fxShow.lt-md>
     <a mat-list-item *ngIf="!isLoggedIn()" routerLink="/login" (click)="onToggleSidenav();"
-       aria-label="Go to login page">
+       aria-label="Go to login page" onKeyDown="onToggleSidenav();">
       <mat-icon>
         exit_to_app
       </mat-icon>
@@ -27,7 +27,7 @@
       </span>
     </a>
     <a mat-list-item *ngIf="isLoggedIn()" (click)="onToggleSidenav(); goToProfilePage();"
-       aria-label="Go to user profile">
+       aria-label="Go to user profile" onKeyDown="onToggleSidenav(); goToProfilePage();">
       <mat-icon>
         account_circle
       </mat-icon>
@@ -35,7 +35,7 @@
         {{ userEmail }}
       </span>
     </a>
-    <a mat-list-item *ngIf="isLoggedIn() && isAccounting()" routerLink="/accounting" (click)="onToggleSidenav();" aria-label="Go to accounting page">
+    <a mat-list-item *ngIf="isLoggedIn() && isAccounting()" routerLink="/accounting" (click)="onToggleSidenav();" aria-label="Go to accounting page" onKeyDown="onToggleSidenav();">
       <mat-icon>
         account_balance
       </mat-icon>
@@ -45,7 +45,7 @@
     </a>
 
     <mat-list-item *ngIf="isLoggedIn()" (click)="showOrdersSubmenu = !showOrdersSubmenu" class="parent"
-                   aria-label="Show Orders and Payment Menu">
+                   aria-label="Show Orders and Payment Menu" onKeyDown="showOrdersSubmenu = !showOrdersSubmenu">
       <mat-icon>
         check_circle_outline
       </mat-icon>
@@ -106,7 +106,7 @@
     </div>
 
     <mat-list-item *ngIf="isLoggedIn()" (click)="showPrivacySubmenu = !showPrivacySubmenu" class="parent"
-                   aria-label="Show Privacy and Security Menu">
+                   aria-label="Show Privacy and Security Menu" onKeyDown="showPrivacySubmenu = !showPrivacySubmenu">
       <mat-icon>
         security
       </mat-icon>
@@ -163,7 +163,7 @@
       </a>
     </div>
 
-    <a mat-list-item *ngIf="isLoggedIn()" (click)="onToggleSidenav(); logout()" aria-label="Logout">
+    <a mat-list-item *ngIf="isLoggedIn()" (click)="onToggleSidenav(); logout()" aria-label="Logout" onKeyDown="onToggleSidenav(); logout()">
       <mat-icon>
         power_settings_new
       </mat-icon>
@@ -176,7 +176,7 @@
   <mat-divider fxHide fxShow.lt-md></mat-divider>
 
   <h3 mat-subheader class="side-subHeader" translate>TITLE_CONTACT</h3>
-  <a mat-list-item routerLink="/contact" (click)="onToggleSidenav();" aria-label="Go to contact us page">
+  <a mat-list-item routerLink="/contact" (click)="onToggleSidenav();" aria-label="Go to contact us page" onKeyDown="onToggleSidenav();">
     <i class="material-icons">
       feedback
     </i>
@@ -234,14 +234,14 @@
   <mat-divider *ngIf="scoreBoardVisible || showGitHubLink" style="margin-bottom: 10px;"></mat-divider>
 
   <a *ngIf="scoreBoardVisible" mat-list-item routerLink="/score-board" (click)="onToggleSidenav()"
-     aria-label="Open score-board">
+     aria-label="Open score-board" onKeyDown="onToggleSidenav()">
     <mat-icon matListIcon class="fas fa-trophy fa-lg"></mat-icon>
     <span class="menu-text truncate">
       {{"TITLE_SCORE_BOARD" | translate}}
     </span>
   </a>
   <a *ngIf="!scoreBoardVisible && offerScoreBoardTutorial" mat-list-item (click)="startHackingInstructor()"
-     aria-label="Launch beginners tutorial">
+     aria-label="Launch beginners tutorial" onKeyDown="startHackingInstructor()">
     <i class="material-icons">
       school
     </i>
@@ -251,7 +251,7 @@
   </a>
 
   <a *ngIf="showGitHubLink" mat-list-item href="./redirect?to=https://github.com/juice-shop/juice-shop"
-     aria-label="Go to OWASP Juice Shop GitHub page">
+     aria-label="Go to OWASP Juice Shop GitHub page" onKeyDown="">
     <mat-icon matListIcon class="fab fa-github fa-lg"></mat-icon>
     <span class="menu-text truncate">
       GitHub
