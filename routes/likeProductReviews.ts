@@ -11,9 +11,24 @@ import { challenges } from '../data/datacache'
 
 const security = require('../lib/insecurity')
 
+// Helper function to validate if an ID is safe to use in MongoDB queries
+const isValidMongoId = (id: any): boolean => {
+  // Check if id is a string and doesn't contain MongoDB operators or special characters
+  return typeof id === 'string' && 
+         !id.includes('$') && 
+         !id.includes('{') && 
+         !id.includes('.');
+}
+
 module.exports = function productReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
     const id = req.body.id
+    
+    // Validate the ID parameter
+    if (!isValidMongoId(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' })
+    }
+    
     const user = security.authenticatedUsers.from(req)
     db.reviewsCollection.findOne({ _id: id }).then((review: Review) => {
       if (!review) {
