@@ -15,8 +15,7 @@ const fetch = require('node-fetch')
 
 async function parseExifData (path: string): Promise<any> {
   return await new Promise((resolve, reject) => {
-    // eslint-disable-next-line no-new
-    new ExifImage({ image: path }, (error: Error | null, exifData: any) => {
+    const exifInstance = new ExifImage({ image: path }, (error: Error | null, exifData: any) => {
       if (error != null) {
         expect.fail(`Could not read EXIF data from ${path}`)
         reject(error)
