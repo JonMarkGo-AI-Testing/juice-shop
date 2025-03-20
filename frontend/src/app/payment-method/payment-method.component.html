@@ -10,7 +10,7 @@
       <ng-container matColumnDef="Selection">
         <mat-header-cell *matHeaderCellDef fxFlex="15%"></mat-header-cell>
         <mat-cell *matCellDef="let element" fxFlex="15%">
-          <mat-radio-button (click)="emitSelectionToParent(element.id)"></mat-radio-button>
+          <mat-radio-button (click)="emitSelectionToParent(element.id)" onKeyDown="emitSelectionToParent(element.id)"></mat-radio-button>
         </mat-cell>
       </ng-container>
       <ng-container matColumnDef="Number">
